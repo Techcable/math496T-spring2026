@@ -1,4 +1,4 @@
-name = "mil"
+name = "math496T"
 defaultTargets = ["MIL"]
 
 [leanOptions]
