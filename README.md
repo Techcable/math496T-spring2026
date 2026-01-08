@@ -81,7 +81,7 @@ and installs Lean and Mathlib.
 
 Opening any `.lean` file in the MIL folder will start Lean,
 though this may also take a little while.
-We suggest working `My_MIL` directory, as described
+We suggest copy `MIL` file as `My_MIL` and work `My_MIL` directory, as described
 in the instructions above. 
 You can update the repository by opening a terminal in the browser
 and typing `git pull` followed by `lake exe cache get` as above.
