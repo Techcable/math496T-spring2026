@@ -1,4 +1,4 @@
-# Computer Verification of Mathematical Proofs: Math486T, Spring 2026
+# Computer Verification of Mathematical Proofs: Math486T  (Spring 2026)
 
 This course is based on Mathematics in Lean (MIL) tutorial, which depends on Lean 4, VS Code, and Mathlib.
 You can find the original MIL textbook both online and in this repository
@@ -7,8 +7,8 @@ in
 or as a
 [pdf document](https://leanprover-community.github.io/mathematics_in_lean/mathematics_in_lean.pdf).
 
-It is best if you make a copy of this math486T repository on your computer.
-Alternatively, you can use Github Codespaces or Gitpod to run Lean and VS Code in the cloud.
+Please make a copy of this math486T repository on your computer.
+<!-- Alternatively, you can use Github Codespaces or Gitpod to run Lean and VS Code in the cloud. -->
 
 This version of *Math496T* is designed for [Lean 4](https://leanprover.github.io/) and
 [Mathlib](https://github.com/leanprover-community/mathlib4).
@@ -24,8 +24,29 @@ Do the following:
 
 2. Make sure you have [git](https://git-scm.com/) installed.
 
-3. Follow these [instructions](https://leanprover-community.github.io/install/project.html#working-on-an-existing-project)
-   to fetch the `math496T` repository and open it up in VS Code.
+3. Open a terminal.
+
+If you have not logged in since you installed Lean and mathlib, then you may need to first type source ~/.profile or source ~/.bash_profile depending on your OS. If you are on Windows, and don't know how to do this, another option is to restart your computer.
+
+Go to the directory where you would like this package to live. You do not need to create a new folder yourself, the next command will create a math496T subfolder for you.
+
+Run git clone https://github.com/cherkis/math496T.
+
+Run cd math496T
+
+Run lake exe cache get (note: this command currently only works in projects which import mathlib4 as a dependency)
+
+Launch VS Code, either through your application menu or by typing code .. (MacOS users need to take a one-off extra step to be able to launch VS Code from the command line.)
+
+If you launched VS Code from a menu, on the main screen, or in the File menu, click "Open folder" (just "Open" on a Mac), and choose the folder math496T (not one of its subfolders).
+
+Using the file explorer on the left-hand side, explore and modify everything you want in My_MIL. 
+
+[THis step is similar to following these [instructions](https://leanprover-community.github.io/install/project.html#working-on-an-existing-project), but with 
+`https://github.com/cherkis/math496T` and `math496T` in place of 
+`https://github.com/leanprover-community/mathematics_in_lean.git` and `mathematics_in_lean`
+ ]
+to fetch the `math496T` repository and open it up in VS Code.
 
 4. Lectures will be posted in `Lectures` folder and homework assignments will appear in `Homework` folder. 
    If you want to move ahead, you can always work on `My_MIL` folder. Each section in the MIL  textbook has an associated Lean file with examples and exercises in `My_MIL` folder, organized by chapter.
