@@ -26,23 +26,23 @@ Do the following:
 
 3. Open a terminal.
 
-If you have not logged in since you installed Lean and mathlib, then you may need to first type source ~/.profile or source ~/.bash_profile depending on your OS. If you are on Windows, and don't know how to do this, another option is to restart your computer.
+   If you have not logged in since you installed Lean and mathlib, then you may need to first type `source ~/.profile` or `source ~/.bash_profile` depending on your OS. If you are on Windows, and don't know how to do this, another option is to restart your computer.
 
-Go to the directory where you would like this package to live. You do not need to create a new folder yourself, the next command will create a math496T subfolder for you.
+   Go to the directory where you would like this package to live. You do not need to create a new folder yourself, the next command will create a `math496T` subfolder for you.
 
-Run git clone https://github.com/cherkis/math496T.
+   Run `git clone https://github.com/cherkis/math496T`.
 
-Run cd math496T
+   Run `cd math496T`
 
-Run lake exe cache get (note: this command currently only works in projects which import mathlib4 as a dependency)
+   Run `lake exe cache get` (note: this command currently only works in projects which import mathlib4 as a dependency)
 
-Launch VS Code, either through your application menu or by typing code .. (MacOS users need to take a one-off extra step to be able to launch VS Code from the command line.)
+   Launch VS Code, either through your application menu or by typing `code .`. (MacOS users need to take a one-off extra step to be able to launch VS Code from the command line.)
 
-If you launched VS Code from a menu, on the main screen, or in the File menu, click "Open folder" (just "Open" on a Mac), and choose the folder math496T (not one of its subfolders).
+   If you launched VS Code from a menu, on the main screen, or in the File menu, click "Open folder" (just "Open" on a Mac), and choose the folder `math496T` (not one of its subfolders).
 
-Using the file explorer on the left-hand side, explore and modify everything you want in My_MIL. 
+   Using the file explorer on the left-hand side, explore and modify everything you want in `My_MIL`. 
 
-[THis step is similar to following these [instructions](https://leanprover-community.github.io/install/project.html#working-on-an-existing-project), but with 
+   [This step is similar to following these [instructions](https://leanprover-community.github.io/install/project.html#working-on-an-existing-project), but with 
 `https://github.com/cherkis/math496T` and `math496T` in place of 
 `https://github.com/leanprover-community/mathematics_in_lean.git` and `mathematics_in_lean`
  ]
