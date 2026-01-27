@@ -62,18 +62,66 @@ obtain (ha | hb) := h1
   exact hb
 
 -- To get used to the notation, try the following examples
-example : (P ∨ Q) → (Q ∨ P) := sorry
+example : (P ∨ Q) → (Q ∨ P) := by
+  rintro (hp | hq)
+  . right
+    exact hp
+  . left
+    exact hq
 
-example : (P ∧ R) → (Q ∨ P) := sorry
+
+example : (P ∧ R) → (Q ∨ P) := by
+  rintro ⟨hp, hr⟩
+  right
+  exact hp
+
+
 
 
 -- Equivalence as a pair:
 -- `P ↔ Q` is really `P → Q` and `Q → P` and
 -- for `h : P ↔ Q` we have `h.mp : P → Q` and `h.mpr : Q → P`
 
-example : (P ∨ Q) ↔ (Q ∨ P) := sorry
+example : (P ∨ Q) ↔ (Q ∨ P) := by
+  constructor
+  . rintro (hp | hq)
+    . right
+      exact hp
+    . left
+      exact hq
+  . rintro (hq | hp)
+    . right
+      exact hq
+    . left
+      exact hp
 
-example : (P ∨ Q) ∧ R ↔ (P ∧ R) ∨ (R ∧ Q) := sorry
+
+
+example : (P ∨ Q) ∧ R ↔ (P ∧ R) ∨ (R ∧ Q) := by
+  constructor
+  -- forward direction
+  . rintro ⟨(hp | hq), hr⟩
+    . left
+      constructor
+      . exact hp
+      . exact hr
+    . right
+      constructor
+      . exact hr
+      . exact hq
+  -- reverse direction
+  . rintro (⟨ hp, hr ⟩ | ⟨ hr, hq ⟩ )
+    . constructor
+      . left
+        exact hp
+      . exact hr
+    . constructor
+      . right
+        exact hq
+      . exact hr
+
+
+
 
 -- Let's explore proving the equivalence `P ∨ Q ∧ R ↔ (P ∨ Q) ∧ (P ∨ R)`
 --  first in human language, then in LEAN
