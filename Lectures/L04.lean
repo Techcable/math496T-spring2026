@@ -390,24 +390,81 @@ done
 
 -- Try proving these examples:
 -- Feel free to use `by_cases` and `have`
-example : ( P → Q ) ↔ (¬ P ∨ Q) := sorry
 
+-- done by contradiction
+example : ( P → Q ) ↔ (¬ P ∨ Q) := by
+  constructor
+  . intro hpq
+    by_cases h : P
+    . right
+      apply hpq
+      exact h
+    . left
+      exact h
+  . rintro (hnp | hq)
+    . intro a
+      contradiction
+    . intro _
+      exact hq
 
-example : ¬ ( P ∨ Q) ↔ ¬ P ∧ ¬ Q := sorry
+-- learned about `push_neg` tactic from the "Mathematics in Lean" book
+example : ¬ ( P ∨ Q) ↔ ¬ P ∧ ¬ Q := by
+  constructor
+  . push_neg
+    intro h
+    exact h
+  . push_neg
+    intro h
+    exact h
 
+-- using `push_neg`
+example : ¬ ( P ∨ Q) ↔ ¬ P ∧ ¬ Q := by
+  constructor
+  . push_neg
+    intro h
+    exact h
+  . push_neg
+    intro h
+    exact h
 
-example : ( P → Q) ↔ ( P ∧ ¬ Q) → (Q ∧ ¬ Q) := sorry
+-- done directly, proving ¬P using `intro`
+example : ¬ ( P ∨ Q) ↔ ¬ P ∧ ¬ Q := by
+  constructor
+  . intro hnp
+    constructor
+    . intro hp
+      apply hnp
+      left
+      exact hp
+    . intro hq
+      apply hnp
+      right
+      exact hq
+  . rintro ⟨np, nq⟩
+    rintro (hp | hq)
+    . contradiction
+    . contradiction
 
-
-example : (¬ P ↔ Q) ↔ ((P → ¬ Q) ∧ (¬ Q → P)) := sorry
-
-
-
-
-
-
-
-
+example : ( P → Q) ↔ ( P ∧ ¬ Q) → (Q ∧ ¬ Q) := by
+  constructor
+  . intro p2q
+    rintro ⟨ hp, nq ⟩
+    constructor
+    . apply p2q
+      exact hp
+    . exact nq
+  . intro func
+    intro hp
+    by_cases q : Q
+    . exact q
+    . have q_and_nq_sufficient : Q ∧ ¬ Q → Q := by
+        rintro ⟨ hq, _ ⟩
+        exact hq;
+      apply q_and_nq_sufficient
+      apply func
+      constructor
+      . exact hp
+      . exact q
 
 /-
 Type theory can be traced back to Russell's paradox based on Cantor's theorem:
