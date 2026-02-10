@@ -62,18 +62,66 @@ obtain (ha | hb) := h1
   exact hb
 
 -- To get used to the notation, try the following examples
-example : (P ∨ Q) → (Q ∨ P) := sorry
+example : (P ∨ Q) → (Q ∨ P) := by
+  rintro (hp | hq)
+  . right
+    exact hp
+  . left
+    exact hq
 
-example : (P ∧ R) → (Q ∨ P) := sorry
+
+example : (P ∧ R) → (Q ∨ P) := by
+  rintro ⟨hp, hr⟩
+  right
+  exact hp
+
+
 
 
 -- Equivalence as a pair:
 -- `P ↔ Q` is really `P → Q` and `Q → P` and
 -- for `h : P ↔ Q` we have `h.mp : P → Q` and `h.mpr : Q → P`
 
-example : (P ∨ Q) ↔ (Q ∨ P) := sorry
+example : (P ∨ Q) ↔ (Q ∨ P) := by
+  constructor
+  . rintro (hp | hq)
+    . right
+      exact hp
+    . left
+      exact hq
+  . rintro (hq | hp)
+    . right
+      exact hq
+    . left
+      exact hp
 
-example : (P ∨ Q) ∧ R ↔ (P ∧ R) ∨ (R ∧ Q) := sorry
+
+
+example : (P ∨ Q) ∧ R ↔ (P ∧ R) ∨ (R ∧ Q) := by
+  constructor
+  -- forward direction
+  . rintro ⟨(hp | hq), hr⟩
+    . left
+      constructor
+      . exact hp
+      . exact hr
+    . right
+      constructor
+      . exact hr
+      . exact hq
+  -- reverse direction
+  . rintro (⟨ hp, hr ⟩ | ⟨ hr, hq ⟩ )
+    . constructor
+      . left
+        exact hp
+      . exact hr
+    . constructor
+      . right
+        exact hq
+      . exact hr
+
+
+
 
 -- Let's explore proving the equivalence `P ∨ Q ∧ R ↔ (P ∨ Q) ∧ (P ∨ R)`
 --  first in human language, then in LEAN
@@ -342,24 +390,81 @@ done
 
 -- Try proving these examples:
 -- Feel free to use `by_cases` and `have`
-example : ( P → Q ) ↔ (¬ P ∨ Q) := sorry
 
+-- done by contradiction
+example : ( P → Q ) ↔ (¬ P ∨ Q) := by
+  constructor
+  . intro hpq
+    by_cases h : P
+    . right
+      apply hpq
+      exact h
+    . left
+      exact h
+  . rintro (hnp | hq)
+    . intro a
+      contradiction
+    . intro _
+      exact hq
 
-example : ¬ ( P ∨ Q) ↔ ¬ P ∧ ¬ Q := sorry
+-- learned about `push_neg` tactic from the "Mathematics in Lean" book
+example : ¬ ( P ∨ Q) ↔ ¬ P ∧ ¬ Q := by
+  constructor
+  . push_neg
+    intro h
+    exact h
+  . push_neg
+    intro h
+    exact h
 
+-- using `push_neg`
+example : ¬ ( P ∨ Q) ↔ ¬ P ∧ ¬ Q := by
+  constructor
+  . push_neg
+    intro h
+    exact h
+  . push_neg
+    intro h
+    exact h
 
-example : ( P → Q) ↔ ( P ∧ ¬ Q) → (Q ∧ ¬ Q) := sorry
+-- done directly, proving ¬P using `intro`
+example : ¬ ( P ∨ Q) ↔ ¬ P ∧ ¬ Q := by
+  constructor
+  . intro hnp
+    constructor
+    . intro hp
+      apply hnp
+      left
+      exact hp
+    . intro hq
+      apply hnp
+      right
+      exact hq
+  . rintro ⟨np, nq⟩
+    rintro (hp | hq)
+    . contradiction
+    . contradiction
 
-
-example : (¬ P ↔ Q) ↔ ((P → ¬ Q) ∧ (¬ Q → P)) := sorry
-
-
-
-
-
-
-
-
+example : ( P → Q) ↔ ( P ∧ ¬ Q) → (Q ∧ ¬ Q) := by
+  constructor
+  . intro p2q
+    rintro ⟨ hp, nq ⟩
+    constructor
+    . apply p2q
+      exact hp
+    . exact nq
+  . intro func
+    intro hp
+    by_cases q : Q
+    . exact q
+    . have q_and_nq_sufficient : Q ∧ ¬ Q → Q := by
+        rintro ⟨ hq, _ ⟩
+        exact hq;
+      apply q_and_nq_sufficient
+      apply func
+      constructor
+      . exact hp
+      . exact q
 
 /-
 Type theory can be traced back to Russell's paradox based on Cantor's theorem:
