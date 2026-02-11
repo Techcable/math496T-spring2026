@@ -141,12 +141,28 @@ theorem problem8 : ∀ S : Prop, ¬ P → (P → S) := by
 -- This might require some logical thinking first
 @[autogradedProof 5]
 theorem problem9 : ∃ Q, ∀ P, P ∨ Q ↔ Q := by
-  sorry
+  use True
+  intro P
+  constructor
+  . intro
+    apply True.intro
+  . intro _
+    right
+    apply True.intro
   done
 
 @[autogradedProof 5]
 theorem problem10 : ∃ Q, ∀ P, P ∨ Q ↔ P := by
-  sorry
+  use False
+  intro P
+  constructor
+  . rintro (hp | hfalse)
+    . exact hp
+    . exfalso
+      apply hfalse
+  . intro hp
+    left
+    exact hp
   done
 
 end
