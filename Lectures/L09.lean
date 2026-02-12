@@ -27,11 +27,39 @@ def SumToOfF (n : Nat) (f : Nat → Nat) : Nat :=
 
 -- ∑_{k=1}^n k = n(n + 1)/2
 theorem SumTo_formula (n : Nat) : 2 * (SumTo n) = n * (succ n) := by
-  sorry
+  induction' n with n hn
+  . rfl
+  . dsimp [SumTo]
+    linarith
+
+
 
 -- ∑_{k=1}^n k^2 = n(n + 1)(2n + 1)/6
 theorem SumOfSquaresTo (n : Nat) : 6 * (SumToOfF n (fun x => x^2)) = n * (succ n) * (2 * n + 1) := by
-  sorry
+  induction' n with m ih
+  . rfl
+  . dsimp [SumToOfF]
+    rw [mul_add] -- distributive property
+    rw [ih] -- elimnates SumToOfF in hypothesis
+    rw [mul_comm] -- swap 6(m+1)^2=(m+1)^26
+    rw [pow_two] -- rewrite (m+1)^2=(m+1)(m+1)
+    rw [mul_comm m] --- swap m * m.succ -> m.succ * m
+    rw [succ_eq_add_one] -- m.succ -> m + 1
+    rw [mul_assoc,mul_assoc]
+    rw [← mul_add] -- dist. property in reverse, factoring out
+    rw [mul_assoc]
+    apply congrArg -- eliminates leading factor of (m+1)
+    -- simplify LHS of equation
+    let r := 2*m*m + 7*m + 6;
+    have h1 : (m+1) * 6 + m * (2 * m + 1) = r := by
+      dsimp [r]
+      calc
+        (m + 1) * 6 + m * (2 * m + 1) = 6 * m + 6 + 2 * m * m  + m := by
+          rw [mul_comm,mul_add,mul_one,mul_add,mul_one,mul_comm m,← add_assoc]
+          done
+        _ = 2 * m * m + 7 * m + 6 := by sorry
+    have h2 : (m+1 + 1) * (2 * (m + 1) + 1) = r
+
 
 -- ∑_{k=1}^n k^3 = (n(n + 1)/2)^2 = (∑_{k=1}^n k)^2
 theorem SumOfCubesTo (n : Nat) : 4 * (SumToOfF n (fun x => x^3)) = n^2 * (succ n)^2 := by
