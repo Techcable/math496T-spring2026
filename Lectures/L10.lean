@@ -93,13 +93,27 @@ example (hAB : A ⊆ B) (hBC : B ⊆ C) : A ⊆ C := by
 -- Exercises: Subset proofs
 
 example : A ∩ B ⊆ B ∩ A := by
-  sorry
+  intro x hInt
+  rw [@Set.mem_inter_iff] -- for some reason, this is
+  obtain ⟨ha, hb⟩ := hInt
+  constructor
+  . exact hb
+  . exact ha
+
 
 example : B ⊆ A ∪ B := by
-  sorry
+  intro x hB
+  right
+  exact hB
 
 example (hAB : A ⊆ B) : A ∩ C ⊆ B ∩ C := by
-  sorry
+  intro  x hAC
+  rw [@Set.mem_inter_iff]
+  obtain ⟨ha, hc⟩ := hAC
+  constructor
+  . exact hAB ha
+  . exact hc
+
 
 example (hAB : A ⊆ B) : A ⊆ B ∪ C := by
   sorry
