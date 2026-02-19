@@ -72,7 +72,16 @@ def addRight : myNat → myNat → myNat
 -- Prove that it is equivalent to the previous two additions:
 -- First change the order of quantifiers to make it easier to prove:
 theorem problem2 : (∀ n m : myNat, addLeft n m = addRight n m) ↔ (∀ m n : myNat, addLeft n m = addRight n m) := by
-  sorry
+  -- At first I didn't understand what this proof was for.
+  -- Then I started proving problem3 and now I understand.
+  -- This means you can interchange the order of the quantifiers for `m, n`
+  constructor
+  . intro a m n
+    apply a
+  . intro a m n
+    apply a
+
+
 
 -- Recall some theorems we proved in class:
 theorem zero_addLeft (n : myNat) : addLeft n zero = n := by
@@ -82,4 +91,14 @@ theorem zero_addLeft (n : myNat) : addLeft n zero = n := by
     rw [ih]
 
 theorem problem3 : ∀ m n : myNat, addLeft n m = addRight n m := by
-  sorry
+  intro m
+  induction' m with m ih
+  . intro n
+    rw [zero_addLeft]
+    dsimp [addRight]
+  . intro n
+    -- Using these two theorems together creates addLeft(n+1,m)=addLeft(n,m)
+    -- I found this out in the hour or I spent trying to solve problem1 with the wrong quantifiers ^_^
+    rw [addLeft_succ,← succ_addLeft]
+    rw [ih]
+    dsimp [addRight]
