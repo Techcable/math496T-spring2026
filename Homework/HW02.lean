@@ -1,4 +1,4 @@
--- import AutograderLib
+import AutograderLib
 import Mathlib.Tactic
 
 /-! # Homework 2: Mathematical Induction
@@ -40,7 +40,28 @@ def addLeft' : myNat → myNat → myNat
    Be careful with your quantifiers.
 -/
 theorem problem1 : ∀ n m : myNat, addLeft n m = addLeft' n m := by
-  sorry
+  intro n
+  induction' n with n ih
+  --- clearly addLeft(zero, m) = m = addLeft(zero, m) = m
+  . intro m
+    rfl
+  -- Assume that ∀ m, addLeft(n, m) = addLeft'(n, m)
+  -- WTS that addLeft(n+1, m)
+  -- equals addLeft'(n+1, m) = addLeft'(n, m + 1)
+  --
+  -- This took forever because I was writing "intro m" at the beginning,
+  -- meaning the IH only worked for a fixed value of n
+  . intro m
+    dsimp [addLeft']
+    have h0 : addLeft' n m.succ = addLeft n m.succ := by
+      rw [ih]
+      done
+    rw [h0]
+    dsimp [addLeft]
+    rw [addLeft_succ]
+    done
+
+
 
 
 -- Above additions were inductive on the first argument.  Now define an addition that is inductive on the second argument:
