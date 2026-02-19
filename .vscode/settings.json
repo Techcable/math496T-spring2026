@@ -17,7 +17,7 @@
         "lean-toolchain": true,
         "mathematics_in_lean.pdf": true,
         "MIL.lean": true,
-        "README.md":true,
+
 	".lake": true,
 	".devcontainer": true,
 	".github": true
@@ -36,5 +36,11 @@
     "files.trimTrailingWhitespace": true,
     "files.trimFinalNewlines": true,
     "lean4.infoview.emphasizeFirstGoal": true,
-    "lean4.infoview.showExpectedType": false
+    "lean4.infoview.showExpectedType": false,
+    "cSpell.words": [
+        "done",
+        "exfalso",
+        "rcases",
+        "rintro"
+    ]
 }

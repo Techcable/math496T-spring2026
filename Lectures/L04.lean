@@ -48,10 +48,12 @@ variable (P Q R : Prop)
 
 
 theorem elimination : (P ∨ Q) ∧ ¬ P → Q := by
-rintro ⟨hp | hq, np⟩
-contradiction
-exact hq
-done
+rintro ⟨(hp | hq), np⟩  -- Pattern matching
+.  exfalso
+   apply np
+   exact hp
+.  exact hq
+
 
 example : (P ∨ Q) ∧ ¬ P → (Q ∨ R) := by
 intro h
@@ -134,12 +136,13 @@ We need to prove both directions.
 ## (→) Left to Right: P ∨ (Q ∧ R) → (P ∨ Q) ∧ (P ∨ R)
 Assume P ∨ (Q ∧ R). We must show both (P ∨ Q) and (P ∨ R).
 
-Case 1: P holds.
+. Case 1: P holds.
 
 Then P ∨ Q holds (by left disjunct).
 And P ∨ R holds (by left disjunct).
 So (P ∨ Q) ∧ (P ∨ R) holds.
-Case 2: Q ∧ R holds.
+
+. Case 2: Q ∧ R holds.
 
 Then Q holds, so P ∨ Q holds (by right disjunct).
 And R holds, so P ∨ R holds (by right disjunct).
@@ -148,10 +151,11 @@ So (P ∨ Q) ∧ (P ∨ R) holds.
 ## (←) Right to Left: (P ∨ Q) ∧ (P ∨ R) → P ∨ (Q ∧ R)
 Assume (P ∨ Q) ∧ (P ∨ R). We must show P ∨ (Q ∧ R).
 
-Case 1: P holds.
+. Case 1: P holds.
 
 Then P ∨ (Q ∧ R) holds immediately (by left disjunct).
-Case 2: P does not hold.
+
+. Case 2: P does not hold.
 
 From P ∨ Q and ¬P, we conclude Q must hold.
 From P ∨ R and ¬P, we conclude R must hold.
@@ -465,6 +469,66 @@ example : ( P → Q) ↔ ( P ∧ ¬ Q) → (Q ∧ ¬ Q) := by
       constructor
       . exact hp
       . exact q
+example : ( P → Q ) ↔ (¬ P ∨ Q) := by
+-- To prove if and only if we first prove
+constructor
+-- if (right implication)
+. intro h
+-- Suppose (P → Q), then we need to show ¬ P ∨ Q
+-- consider two cases: Q is true or Q is not true.
+  by_cases hh : Q
+  -- if Q holds
+  . right
+  -- then the right side of the disnjunction holds
+    apply hh
+  -- if Q does not hold, then we are going to prove ¬ P
+  left
+  -- suppose the opposite: that P holds
+  intro hp
+  -- If Q holds then I have a contradiction
+  apply hh
+  -- and Q follows from P, and we assumed P, thus coming to a contradiction.
+  apply h
+  exact hp
+  -- Therefore P does not hold.
+. rintro (np | hq)
+  . intro hp
+    contradiction
+  . intro hp1
+    exact hq
+
+
+example : ¬ ( P ∨ Q) ↔ ¬ P ∧ ¬ Q := by
+constructor
+. rintro h
+  constructor
+  . intro hp
+    apply h
+    left
+    exact hp
+  . intro hq
+    apply h
+    right
+    exact hq
+. intro ⟨hp,hq⟩
+  intro h
+  rcases h with (h1 | h2)
+  . contradiction
+  . contradiction
+
+
+example : ( P → Q) ↔ ( P ∧ ¬ Q) → (Q ∧ ¬ Q) := sorry
+
+
+example : (¬ P ↔ Q) ↔ ((P → ¬ Q) ∧ (¬ Q → P)) := sorry
+
+
+
+
+
+
+
+
 
 /-
 Type theory can be traced back to Russell's paradox based on Cantor's theorem:

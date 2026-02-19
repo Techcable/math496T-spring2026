@@ -203,8 +203,7 @@ apply h.left
 exact hp
 done
 
-example:  (P → Q) ∧ ¬Q → ¬ P := by
-rintro ⟨h1,h2⟩
+example:  (P → Q) ∧ ¬Q → ¬ P := sorry
 
 example : (P ∧ Q) → P := sorry
 
