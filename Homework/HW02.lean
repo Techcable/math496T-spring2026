@@ -53,10 +53,10 @@ theorem problem1 : ∀ n m : myNat, addLeft n m = addLeft' n m := by
   -- meaning the IH only worked for a fixed value of n
   . intro m
     dsimp [addLeft']
-    have h0 : addLeft' n m.succ = addLeft n m.succ := by
+    /- have h0 : addLeft' n m.succ = addLeft n m.succ := by
       rw [ih]
-      done
-    rw [h0]
+      done -/
+    rw [← ih]  -- the `have` is not necessary by using ←
     dsimp [addLeft]
     rw [addLeft_succ]
     done
