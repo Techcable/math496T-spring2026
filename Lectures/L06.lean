@@ -179,11 +179,38 @@ example : ¬ ∀ x : ℕ, ∃ y : ℕ, x = y + 1 := by
   linarith
 
 -- try again, proving a statement over ℝ and its negation over ℕ :
-example : ∀ x : ℝ, ∃ y, x = y + 5 := sorry
+example : ∀ x : ℝ, ∃ y, x = y + 5 := by
+  intro x
+  use x-5
+  linarith
 
-example : ¬ ∀ x : ℕ, ∃ y, x = y+5 := sorry
+example : ¬ ∀ x : ℕ, ∃ y, x = y+5 := by
+  push_neg
+  use 0
+  intro y
+  linarith
+
 
 -- State and then prove or disprove the following statements:
 -- `"All integers are not odd"` and `"Not all integers are odd"`
+
+def isOddInt (n : ℤ) := ∃ m, n = 2 * m + 1
+
+
+-- "All integers are not odd" - `∀ x : ℤ, ¬ isOdd x` is false
+example : ¬(∀ x : ℤ, ¬ isOddInt x) := by
+  intro h
+  apply h 1
+  dsimp [isOddInt]
+  use 0
+  linarith
+
+-- "not all integers are odd" is true, but I could only prove this for ℕ
+example : ¬(∀ x : ℕ, isOdd x) := by
+  intro falseh
+  have zeroIsOdd : isOdd 0 := falseh 0
+  dsimp [isOdd] at zeroIsOdd
+  obtain ⟨m, meq⟩ := zeroIsOdd
+  linarith
 
 -- Again, completing the `even` analogue of this exercise requires more tools.
