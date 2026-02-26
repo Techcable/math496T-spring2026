@@ -25,6 +25,17 @@ we pick from a class.
 Our running example: **ℤ/nℤ**, the integers modulo n.
 -/
 
+/-
+
+## Nicholas Notes
+The tatictic `show x` works if the goal isequivalent to `x`.
+It doesn't change the goal, just rephrases it.
+
+The tactic `change at x` is like `show` but for `x` instead of the goal.
+
+The `congr` tactic does pattern matching so something like `f(x) + 3 = y(y)=3` becomes `x=y`.
+The `rename_i` renames the "ghost" variables.
+-/
 
 -- ============================================================================
 -- ## Key Definitions (Quotient API)
@@ -96,10 +107,10 @@ example (a : ℤ) : IntMod 5 := ⟦a⟧
 -- Exercises (Part 1)
 
 -- (a) Construct the element [2] in IntMod 7:
-example : IntMod 7 := sorry
+example : IntMod 7 := Quotient.mk _ 2
 
 -- (b) Construct [0] in IntMod 3:
-example : IntMod 3 := sorry
+example : IntMod 3 := ⟦0⟧
 
 
 -- ============================================================================
@@ -139,8 +150,17 @@ example (h : (⟦17⟧ : IntMod 5) = ⟦2⟧) : CongMod 5 17 2 :=
 
 -- Packaging both directions:
 theorem intmod_eq_iff (n : ℕ) (a b : ℤ) :
-    (⟦a⟧ : IntMod n) = ⟦b⟧ ↔ CongMod n a b :=
-  ⟨Quotient.exact, fun h => Quotient.sound h⟩
+    (⟦a⟧ : IntMod n) = ⟦b⟧ ↔ CongMod n a b := by
+  -- without `by` was ⟨Quotient.exact, fun h => Quotient.sound h⟩
+  constructor
+  . apply Quotient.exact
+  -- The following proof works, but so does the second
+  /- . intro h
+    apply Quotient.sound
+    show CongMod n a b
+    exact h-/
+  -- Using an @ disables all implicit arguments
+  . apply @Quotient.sound _ (congModSetoid n)
 
 -- Distinct classes: ⟦1⟧ ≠ ⟦2⟧ in IntMod 5
 example : (⟦1⟧ : IntMod 5) ≠ ⟦2⟧ := by
@@ -153,16 +173,25 @@ example : (⟦1⟧ : IntMod 5) ≠ ⟦2⟧ := by
 
 -- (a) Prove ⟦7⟧ = ⟦2⟧ in IntMod 5:
 example : (⟦7⟧ : IntMod 5) = ⟦2⟧ := by
-  sorry
+  apply Quotient.sound
+  show CongMod 5 7 2
+  unfold CongMod
+  norm_num
 
 
 -- (b) Prove ⟦0⟧ = ⟦9⟧ in IntMod 3:
 example : (⟦0⟧ : IntMod 3) = ⟦9⟧ := by
-  sorry
+    apply Quotient.sound
+    show CongMod 3 0 9
+    unfold CongMod
+    norm_num
 
 -- (c) Prove ⟦1⟧ ≠ ⟦3⟧ in IntMod 4:
 example : (⟦1⟧ : IntMod 4) ≠ ⟦3⟧ := by
-  sorry
+  intro h
+  have h2 : CongMod 4 1 3 := Quotient.exact h
+  unfold CongMod at h2
+  norm_num at h2
 
 
 -- ============================================================================
