@@ -56,10 +56,21 @@ theorem SumOfSquaresTo (n : Nat) : 6 * (SumToOfF n (fun x => x^2)) = n * (succ n
       calc
         (m + 1) * 6 + m * (2 * m + 1) = 6 * m + 6 + 2 * m * m  + m := by
           rw [mul_comm,mul_add,mul_one,mul_add,mul_one,mul_comm m,← add_assoc]
-          done
-        _ = 2 * m * m + 7 * m + 6 := by sorry
-    have h2 : (m+1 + 1) * (2 * (m + 1) + 1) = r
-
+        _ = 2 * m * m + 7 * m + 6 := by
+          rw [add_assoc (6 *m) 6 (2 * m * m),add_comm]
+          rw [← add_assoc,add_comm m]
+          have hm7 : (6 * m) + m = 7 * m := by
+            nth_rewrite 2 [← mul_one m]
+            rw [mul_comm 6 m,← mul_add]
+            rw [add_one]
+            have succ6 : succ 6 = 7  := by rfl
+            rw [succ6]
+            rw [mul_comm]
+          rw [hm7]
+          omega -- this just rearranges for us
+    have h2 : (m+1 + 1) * (2 * (m + 1) + 1) = r := by
+      linarith
+    rw [h1,h2]
 
 -- ∑_{k=1}^n k^3 = (n(n + 1)/2)^2 = (∑_{k=1}^n k)^2
 theorem SumOfCubesTo (n : Nat) : 4 * (SumToOfF n (fun x => x^3)) = n^2 * (succ n)^2 := by
