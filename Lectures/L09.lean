@@ -74,27 +74,55 @@ theorem SumOfSquaresTo (n : Nat) : 6 * (SumToOfF n (fun x => x^2)) = n * (succ n
 
 -- ∑_{k=1}^n k^3 = (n(n + 1)/2)^2 = (∑_{k=1}^n k)^2
 theorem SumOfCubesTo (n : Nat) : 4 * (SumToOfF n (fun x => x^3)) = n^2 * (succ n)^2 := by
-  sorry
+  induction' n with n ih
+  . rfl
+  . dsimp [SumToOfF] at ⊢
+    linarith
 
 -- HARD: Involves subtraction
 -- ∑_{k=1}^n (2k - 1) = n^2
 theorem oddSum (n : ℕ) : SumToOfF n (fun m => 2*m - 1) = n*n := by
-  sorry
+  induction' n with n ih
+  . rfl
+  . dsimp [SumToOfF] at ih ⊢
+    rw [ih]
+    have : (n + 1) * (n + 1) = n*n + 2 * n + 1 := by
+      linarith
+    omega
 
 
 lemma sum_linear (n p : ℕ) (f : ℕ → ℕ) : SumToOfF n (fun m => p * f m) = p * SumToOfF n f := by
-  sorry
+  induction' n with n ih
+  . rfl
+  . dsimp [SumToOfF]
+    rw [ih]
+    linarith
+
 
 lemma sumToOfId_eq_SumTo : SumToOfF n (fun m => m) = SumTo n := by
-  sorry
+  induction' n with n ih
+  . rfl
+  . dsimp [SumToOfF, SumTo]
+    rw [ih]
+
 
 -- ∑_{k=1}^n (2k) = n(n + 1)
 example (n:ℕ) : SumToOfF n (fun m => 2*m) = n * (n+1) := by
-  sorry
+  rw [sum_linear,sumToOfId_eq_SumTo,SumTo_formula]
+
 
 
 
 
 -- ∑_{k=1}^n k(k + 1) = n(n + 1)(n + 2)/3
 example : 3 * SumToOfF n (fun m => m*(m+1)) = n * (n + 1) * (n + 2) := by
-  sorry
+  induction' n with n ih
+  . rfl
+  . dsimp [SumToOfF]
+    calc
+      3 * ((n + 1) * (n + 1 + 1) + SumToOfF n fun m => m * (m + 1))
+      _ = 3 * (SumToOfF n fun m => m * (m + 1)) + 3 * (n + 1) * (n + 1 + 1) := by
+        linarith
+      _ = n * (n + 1) * (n + 2) + 3 * (n + 1) * (n + 1 + 1) := by
+        rw [ih]
+    linarith
