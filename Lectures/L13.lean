@@ -133,10 +133,13 @@ which for `congModSetoid n` is `CongMod n a b`.
 -- Example: ⟦3⟧ = ⟦8⟧ in IntMod 5  (since 5 ∣ 3 - 8)
 example : (⟦3⟧ : IntMod 5) = ⟦8⟧ := by
   apply Quotient.sound
+  -- dsimp [HasEquiv.Equiv, congModSetoid,CongMod]
+  -- norm_num
   -- dsimp [HasEquiv.Equiv, congModSetoid] -- Can be done with `dsimp` and seeing the abbreviation meaning.
   -- Goal: 3 ≈ 8, i.e. CongMod 5 3 8
   show CongMod 5 3 8
-  unfold CongMod; norm_num
+  unfold CongMod
+  norm_num
 
 -- Example: ⟦0⟧ = ⟦12⟧ in IntMod 4
 example : (⟦0⟧ : IntMod 4) = ⟦12⟧ := by
@@ -228,7 +231,8 @@ def isDivisibleBy3 : IntMod 3 → Prop :=
 
 -- Verify it computes correctly:
 example : isDivisibleBy3 ⟦6⟧ := by
-  show (3 : ℤ) ∣ 6; norm_num
+  show (3 : ℤ) ∣ 6
+  norm_num
 
 example : ¬ isDivisibleBy3 ⟦7⟧ := by
   show ¬ (3 : ℤ) ∣ 7; omega
@@ -263,13 +267,13 @@ To prove `∀ q : Quotient s, P q`, it suffices to prove `∀ a : α, P ⟦a⟧`
 This is because every element of the quotient is of the form `⟦a⟧` for
 some representative `a`.
 
-Tactic: `induction q using Quotient.ind` replaces `q` with `⟦a⟧`.
+Tactic: `induction' q using Quotient.ind` replaces `q` with `⟦a⟧`.
 -/
 #check Quotient -- Quotient (s : Setoid α) : Sort u
 
 -- Example: every element of IntMod 2 is ⟦0⟧ or ⟦1⟧.
 theorem intmod2_cases (q : IntMod 2) : q = ⟦0⟧ ∨ q = ⟦1⟧ := by
-  induction' q using Quotient.ind -- better `induction' q using Quotient.ind with a` to get the name `a` for the representative
+  induction q using Quotient.ind -- better `induction' q using Quotient.ind with a` to get the name `a` for the representative
   rename_i a
   -- Key: reduce to the canonical representative a % 2
   have key : (⟦a⟧ : IntMod 2) = ⟦a % 2⟧ := by
@@ -284,6 +288,7 @@ theorem intmod2_cases (q : IntMod 2) : q = ⟦0⟧ ∨ q = ⟦1⟧ := by
   . simp [h]
 
 -- Example: the canonical projection is surjective.
+-- NOTE: How to work with functions, their surjectivity and injectivity is the subject of the next lecture. So, here, we are jumping ahead with `Function.Surjective`.
 theorem mk_surjective (n : ℕ) :
     Function.Surjective (Quotient.mk (congModSetoid n)) := by
   intro q
@@ -337,10 +342,10 @@ example : IntMod.add 5 ⟦3⟧ ⟦4⟧ = (⟦7⟧ : IntMod 5) := by rfl
 -- The `congr 1` tactic reduces ⟦expr1⟧ = ⟦expr2⟧ to expr1 = expr2.
 theorem IntMod.add_comm (n : ℕ) (a b : IntMod n) :
     IntMod.add n a b = IntMod.add n b a := by
-  induction a using Quotient.ind
-  induction b using Quotient.ind
-  rename_i a b
-  show (⟦a + b⟧ : IntMod n) = ⟦b + a⟧
+  induction' a using Quotient.ind with p
+  induction' b using Quotient.ind with q
+  -- rename_i a b
+  show (⟦p + q⟧ : IntMod n) = ⟦q + p⟧
   congr 1; ring
 
 -- Step 5: Zero is the right identity.
