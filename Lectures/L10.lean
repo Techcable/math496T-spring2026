@@ -116,10 +116,16 @@ example (hAB : A ⊆ B) : A ∩ C ⊆ B ∩ C := by
 
 
 example (hAB : A ⊆ B) : A ⊆ B ∪ C := by
-  sorry
+  intro x x_in_a
+  left
+  apply hAB
+  exact x_in_a
 
 example : A \ B ⊆ A := by
-  sorry
+  intro x h
+  rw [Set.mem_diff] at h
+  exact h.left
+
 
 -- ============================================================================
 -- ## Part 2: The `ext` Tactic — Proving Set Equality
@@ -275,7 +281,8 @@ example : A ∩ (B ∪ C) = (A ∩ B) ∪ (A ∩ C) := by
 -- Example: Complement of complement
 example : Aᶜᶜ = A := by
   ext x
-  simp [Set.mem_compl_iff]
+  -- Nicholas: I needed to change this to `simp` only so `tauto` had something to do
+  simp only [Set.mem_compl_iff]
   -- This reduces to: ¬¬(x ∈ A) ↔ x ∈ A
   tauto
 
@@ -287,28 +294,70 @@ example : Aᶜᶜ = A := by
 -- Group 1: Subset proofs (use intro, exact, have)
 
 example : A ∩ B ⊆ A ∪ C := by
-  sorry
+  rintro x ⟨x_in_a, _⟩
+  left
+  exact x_in_a
 
 example (h : A ⊆ B) (h' : A ⊆ C) : A ⊆ B ∩ C := by
-  sorry
+  intro x x_in_a
+  have x_in_b : x ∈ B := h x_in_a
+  have x_in_c : x ∈ C := h' x_in_a
+  exact ⟨x_in_b, x_in_c⟩
 
 example : A \ B ⊆ Bᶜ := by
-  sorry
+  rintro x ⟨_, x_notin_b⟩
+  rw [Set.mem_compl_iff]
+  exact x_notin_b
+
 
 
 -- Group 2: Set equalities using `ext` (use ext, constructor, intro, exact, etc.)
 
 -- Union is associative
 example : (A ∪ B) ∪ C = A ∪ (B ∪ C) := by
-  sorry
+  ext
+  constructor
+  . rintro ((x_in_a | x_in_b) | x_in_c)
+    . left
+      exact x_in_a
+    . right
+      left
+      exact x_in_b
+    . left
+      left
+      exact x_in_c
+  . rintro (x_in_a | (x_in_b | x_in_c))
+    . left
+      left
+      exact x_in_a
+    . left
+      right
+      exact x_in_b
+    . right
+      exact x_in_c
 
 -- Intersection is associative
 example : (A ∩ B) ∩ C = A ∩ (B ∩ C) := by
-  sorry
+  ext
+  constructor
+  . rintro ⟨⟨x_in_a, x_in_b⟩, x_in_c⟩
+    exact ⟨x_in_a, ⟨x_in_b, x_in_c⟩⟩
+  . rintro ⟨x_in_a, ⟨x_in_b, x_in_c⟩⟩
+    exact ⟨⟨x_in_a, x_in_b⟩, x_in_c⟩
 
 -- A ∩ A = A (idempotence)
 example : A ∩ A = A := by
-  sorry
+  ext x
+  constructor
+  . rintro ⟨x_in_a, _⟩
+    exact x_in_a
+  . intro x_in_a
+    exact ⟨x_in_a, x_in_a⟩
+
+
+
+
+
 
 -- A ∪ A = A (idempotence)
 example : A ∪ A = A := by
