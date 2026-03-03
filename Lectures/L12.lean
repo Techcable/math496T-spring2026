@@ -606,11 +606,23 @@ In Lean/Mathlib, many familiar relations are already defined:
 
 -- Reflexive: every number divides itself
 example : Reflexive (· ∣ · : ℕ → ℕ → Prop) := by
-  sorry
+  intro x
+  use 1
+  linarith
 
 -- Transitive: if a ∣ b and b ∣ c then a ∣ c
 example : Transitive (· ∣ · : ℕ → ℕ → Prop) := by
-  sorry
+  rintro a b c ⟨k, b_mult_a⟩ ⟨m, c_mult_b⟩
+  dsimp [Dvd.dvd]
+  have : c = a * (k * m) := by
+    calc
+      c = (a * k) * m := by
+        rw [← b_mult_a]
+        exact c_mult_b
+      _ = a * (k * m) := by
+        rw [mul_assoc]
+  use (k * m)
+
 
 -- NOT symmetric: 2 ∣ 4 but ¬ (4 ∣ 2)
 example : ¬ Symmetric (· ∣ · : ℕ → ℕ → Prop) := by

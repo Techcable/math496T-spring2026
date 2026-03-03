@@ -25,6 +25,14 @@ preserved under composition.
 
 For now, the key message: **injectivity, surjectivity, and bijectivity** are
 the tools that let us compare the "sizes" of sets.
+
+# Nicholas Notes
+Two functions with different domans/codomains cannot be compared by extensionality,
+because they have different types!
+This is an example of nonsensical or undesirable statements are prevented by the types.
+
+The operation Set.range transforms a function f(x)=x^2 to a function operating on the images of sets,
+so that f({1,2})={x^2,x^2}.
 -/
 
 
@@ -91,15 +99,19 @@ example : (fun n : ℤ => n * 1 + 0) = id := by
 
 -- (a) Prove that `f: ℕ → ℕ: n ↦ 2 * n` and `f: ℕ → ℕ: n ↦  n + n` are the same function:
 example : (fun n : ℕ => 2 * n) = (fun n : ℕ => n + n) := by
-  sorry
+  ext x
+  rw [mul_comm,mul_two]
 
 -- (b) Prove that 0 is in the range of `f:ℤ → ℤ: n ↦ 3 * n`:
 example : (0 : ℤ) ∈ Set.range (fun n : ℤ => 3 * n) := by
-  sorry
+  simp only [Set.mem_range]
+  use 0
 
 -- (c) Prove that 5 is NOT in the range of `f: ℕ → ℕ: n ↦ 2 * n`:
 example : (5 : ℕ) ∉ Set.range (fun n : ℕ => 2 * n) := by
-  sorry
+  simp only [Set.mem_range]
+  rintro ⟨k, hk⟩
+  omega
 
 
 -- ============================================================================
@@ -154,21 +166,30 @@ On ℤ the factorization (a - b)(a + b) = 0 allows a = -b ≠ a.
 
 -- (a) Prove that `f: ℤ → ℤ : n ↦ 5 * n - 3` is injective:
 example : Function.Injective (fun n : ℤ => 5 * n - 3) := by
-  sorry
+  dsimp [Function.Injective]
+  intro n m h
+  linarith
 
 -- (b) Prove that `f: ℕ → ℕ: n ↦ 3 * n` is injective:
 example : Function.Injective (fun n : ℕ => 3 * n) := by
-  sorry
+  dsimp [Function.Injective]
+  intro n m h
+  linarith
 
 -- (c) Show that the constant function is NOT injective (when there's more
 -- than one element). We prove it fails by finding a counterexample.
 example : ¬ Function.Injective (fun _ : ℕ => (0 : ℕ)) := by
-  sorry
+  intro finj
+  dsimp [Function.Injective] at finj
+  have : 1 = 2 := @finj 1 2 rfl
+  contradiction
 
 -- (d) Show that `f: ℤ → ℤ : n ↦ n % 3` is NOT injective:
 example : ¬ Function.Injective (fun n : ℤ => n % 3) := by
-  sorry
-
+  intro finj
+  dsimp [Function.Injective] at finj
+  have := @finj 3 6
+  contradiction
 
 -- ============================================================================
 -- ## Part 3: Surjectivity
@@ -217,12 +238,17 @@ on the domain and codomain!
 
 -- (a) Prove that `f: ℤ → ℤ : n ↦ n - 7` is surjective:
 example : Function.Surjective (fun n : ℤ => n - 7) := by
-  sorry
+  simp [Function.Surjective]
+  intro x
+  use (x + 7)
 
 -- (b) Prove that `f: ℤ → ℤ : n ↦ 3 * n + 2` is NOT surjective:
 -- (Hint: can you hit 0? What would n have to be?)
 example : ¬ Function.Surjective (fun n : ℤ => 3 * n + 2) := by
-  sorry
+  intro finj
+  dsimp only [Function.Surjective] at finj
+  have : ∃ a : ℤ, 3 * a + 2 = 0 := finj 0
+
 
 -- (c) The identity function is surjective:
 example : Function.Surjective (id : ℕ → ℕ) := by
