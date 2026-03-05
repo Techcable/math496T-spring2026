@@ -1,4 +1,4 @@
--- import AutograderLib
+import AutograderLib
 import Mathlib.Tactic
 import Mathlib.Data.Set.Lattice
 import Mathlib.Data.Set.Prod
@@ -22,20 +22,22 @@ def CongZ (p q : ℕ × ℕ) : Prop := p.1 + q.2 = q.1 + p.2
 -- by proving reflexivity,
 @[autogradedProof 5]
 theorem problem1 : ∀ p : ℕ × ℕ, CongZ p p := by
-  sorry
-  done
+  rintro ⟨a, b⟩
+  rfl
 
 -- symmetry,
 @[autogradedProof 5]
 theorem problem2 : CongZ p q → CongZ q p := by
-  sorry
-  done
+  intro congpq
+  dsimp [CongZ] at *
+  linarith
 
 -- and transitivity.
 @[autogradedProof 5]
 theorem problem3 : CongZ p q → CongZ q r → CongZ p r := by
-  sorry
-  done
+  intro congpq congpr
+  dsimp [CongZ] at *
+  linarith
 
 -- These assemple into a theorem
 theorem congZ_equiv : Equivalence CongZ where
@@ -60,14 +62,20 @@ def negTwo' : newZ := Quotient.mk congZSetoid (5, 7)
 -- Prove that 1/2 = 2/4
 @[autogradedProof 6]
 theorem problem4 : negOne = negOne' := by
-  sorry
-  done
+  -- dsimp [negOne,negOne']
+  apply Quotient.sound
+  show CongZ ⟨1, 2⟩ ⟨2, 3⟩
+  dsimp [CongZ]
 
 -- Prove that 1/2 ≠ 1/3
 @[autogradedProof 7]
 theorem problem5 : negOne ≠ negTwo := by
-   sorry
-   done
+  intro h
+  rw [negOne,negTwo] at h
+  simp at h
+  change CongZ ⟨1, 2⟩ ⟨1, 3⟩ at h
+  dsimp [CongZ] at h
+  contradiction
 
 
 -- Prove that the absolute value is well-defined on the quotient.
@@ -76,8 +84,19 @@ def newAbs (p : ℕ × ℕ) : ℕ := if p.1 ≥ p.2 then p.1 - p.2 else p.2 - p.
 -- To show this is well-defined, we need to show that if p and q are CongZ, then newAbs p = newAbs q.
 @[autogradedProof 10]
 theorem problem6 : ∀ (a b : ℕ × ℕ), a ≈ b → newAbs a = newAbs b := by
-  sorry
-  done
+  intro ⟨a1, a2⟩ ⟨b1, b2⟩ a_equiv_b
+  change CongZ ⟨a1, a2⟩ ⟨b1, b2⟩ at a_equiv_b
+  dsimp [CongZ] at a_equiv_b
+  dsimp [newAbs]
+  -- Saw Nils mention `split`
+  split
+  . split
+    . omega
+    . omega
+  . split
+    . omega
+    . omega
+
 
 #check Quotient.sound -- Quotient.sound : a ≈ b → ⟦a⟧ = ⟦b⟧
 #check Quotient.lift -- Quotient.lift (f : α → β) : (∀ (a b : α), a ≈ b → f a = f b) → Quotient s → β
@@ -88,11 +107,11 @@ def newZAbs (z : newZ) : ℕ := Quotient.lift newAbs problem6 z
 
 @[autogradedProof 6]
 theorem problem7 : newZAbs negTwo = 2 := by
-    sorry
-    done
+    rw [newZAbs, negTwo]
+    dsimp [newAbs]
 
 
 @[autogradedProof 6]
 theorem problem8 : newZAbs ⟦(1,0)⟧  = newZAbs negOne := by
-    sorry
-    done
+    rw [newZAbs,newZAbs,negOne]
+    dsimp [newAbs]
