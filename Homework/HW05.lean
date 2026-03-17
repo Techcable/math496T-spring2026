@@ -48,8 +48,16 @@ theorem problem1 (c : γ) (f : α → β) :
 @[autogradedProof 7]
 theorem problem2 {f : α → α}
     (hff : f ∘ f = f) (hinj : Function.Injective f) : f = id := by
-  sorry
-  done
+  have ff_eq_fid : f ∘ f = f ∘ id := by
+    rw [Function.comp_id]
+    exact hff
+  -- The only reason we need `funext` here is so we can produce a `c : α`
+  -- to pass as the first parameter to problem1.
+  -- It would be sufficient to use `a: NonEmpty` and `Classical.choice`,
+  -- but `funext x` also produces an instance of α and is simpler.
+  funext x
+  have left_cancelled : f = id := (problem1 x f).mp hinj f id ff_eq_fid
+  rw [left_cancelled]
 
 -- Set-theoretic part
 variable (f : α → β)
