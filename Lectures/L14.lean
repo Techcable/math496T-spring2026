@@ -40,10 +40,14 @@ Later, we get some theorems about injectivity/surjectivity which become importan
 Theorem `surj_of_comp_surj` states that `g ∘ f` surjective implies `g` is surjective (but says nothing about f).
 This is obvious because if there was something out of reach of g, then it would be out of reach of the combo.
 
-Theorem `inj_of_comp_inj` states that `g ∘ f` injective implies that `f` is injective (but says nothing about f).
+Theorem `inj_of_comp_inj` states that `g ∘ f` injective implies that `f` is injective (but says nothing about g).
 Injectivity basically means non-collapsing, and if f collapsed something into a single point then g cannot rexpand it.
-Does not imply anything about g, because if g could collapse points not in the same
+Does not imply anything about g, because if g could collapse points not in the range of f.
 Credit for last part: https://math.stackexchange.com/a/2067771
+
+Left Inverse is called a "retraction", which exists iff the function is invertible.
+Right Inverse is called a "section," which exists iff the function is surjective.
+See <https://en.wikipedia.org/wiki/Inverse_function#Left_and_right_inverses> for more details.
 -/
 
 
@@ -468,13 +472,22 @@ example : Function.Injective (fun n : ℤ => 2 * n + 3) := by
 -- find ANY g such that g ∘ f is injective.
 theorem inj_of_comp_inj {f : α → β} {g : β → γ}
     (h : Function.Injective (g ∘ f)) : Function.Injective f := by
-  sorry
+  dsimp [Function.Injective] at ⊢ h
+  intro x y fx_eq_fy
+  have gfx_eq_gfy : g (f x) = g (f y) := by
+    rw [fx_eq_fy]
+  apply h gfx_eq_gfy
+
+
 
 -- (d) Show that if g ∘ f is surjective, then g is surjective.
 -- (We don't need any assumption on f!)
 theorem surj_of_comp_surj {f : α → β} {g : β → γ}
     (h : Function.Surjective (g ∘ f)) : Function.Surjective g := by
-  sorry
+  dsimp [Function.Surjective] at ⊢ h
+  intro b
+  obtain ⟨a, gfa_eq_b⟩ := h b
+  use f a
 
 
 -- ============================================================================
