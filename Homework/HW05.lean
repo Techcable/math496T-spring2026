@@ -1,4 +1,4 @@
--- import AutograderLib
+import AutograderLib
 import Mathlib.Tactic
 import Mathlib.Data.Set.Basic
 import Mathlib.Data.Set.Lattice
@@ -22,8 +22,27 @@ and
 theorem problem1 (c : γ) (f : α → β) :
     Function.Injective f ↔
     ∀ (g₁ g₂ : γ → α), f ∘ g₁ = f ∘ g₂ → g₁ = g₂ := by
-  sorry
-  done
+  constructor
+  . intro finj g1 g2 fg1_eq_fg2
+    funext x
+    have fg1x_eq_fg2x : (f ∘ g1) x = (f ∘ g2) x := by
+      rw [fg1_eq_fg2]
+    dsimp at fg1x_eq_fg2x
+    exact finj fg1x_eq_fg2x
+  . intro left_cancellable
+    dsimp [Function.Injective]
+    intro x y fx_eq_fy
+    let g1 : γ → α := fun n => x
+    let g2 : γ → α := fun n => y
+    have fg1_eq_fg2 : f ∘ g1 = f ∘ g2 := by
+      funext z
+      dsimp [g1,g2]
+      exact fx_eq_fy
+    have g1_eq_g2 := left_cancellable g1 g2 fg1_eq_fg2
+    have g1c_eq_g2c : g1 c = g2 c := by
+      rw [g1_eq_g2]
+    dsimp [g1,g2] at g1c_eq_g2c
+    exact g1c_eq_g2c
 
 -- (2) Injective idempotent is identity.
 @[autogradedProof 7]
