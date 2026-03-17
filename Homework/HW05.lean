@@ -67,26 +67,67 @@ variable (U V : Set β)
 -- (3) Preimage respects intersection.
 @[autogradedProof 4]
 theorem problem3 : f ⁻¹' (U ∩ V) = (f ⁻¹' U) ∩ (f ⁻¹' V) := by
-  sorry
-  done
+  ext x
+  constructor
+  . rintro ⟨fx_in_u, fx_in_v⟩
+    exact ⟨fx_in_u, fx_in_v⟩
+  . rintro ⟨f_in_inv_u, f_in_inv_v⟩
+    rw [Set.mem_preimage] at *
+    exact ⟨f_in_inv_u, f_in_inv_v⟩
 
 -- (4) Preimage respects union.
 @[autogradedProof 4]
 theorem problem4 : f ⁻¹' (U ∪ V) = (f ⁻¹' U) ∪ (f ⁻¹' V) := by
-  sorry
-  done
+  ext x
+  constructor
+  . -- turns out simp [Set.mem_preimage] is sufficient for both sides
+    simp [Set.mem_preimage]
+    /-
+    rw [Set.mem_preimage]
+    rintro (fx_in_u | fx_in_v)
+    . left
+      rw [Set.mem_preimage]
+      exact fx_in_u
+    . right
+      rw [Set.mem_preimage]
+      exact fx_in_v -/
+  . simp [Set.mem_preimage]
+
 
 -- (5) Preimage respects complement.
 @[autogradedProof 4]
 theorem problem5 : f ⁻¹' (Uᶜ) = (f ⁻¹' U)ᶜ := by
-  sorry
-  done
+  ext x
+  constructor
+  . intro x_in_inv_comp
+    rw [Set.mem_preimage] at x_in_inv_comp
+    rw [Set.mem_compl_iff] at x_in_inv_comp ⊢
+    rw [Set.mem_preimage] at ⊢
+    intro xf_in_u
+    contradiction
+  . intro x_in_comp_inv_u
+    rw [Set.mem_compl_iff] at x_in_comp_inv_u
+    rw [Set.mem_preimage] at x_in_comp_inv_u ⊢
+    rw [Set.mem_compl_iff] at ⊢
+    exact x_in_comp_inv_u
 
 -- (6) Image respects union.
 @[autogradedProof 4]
 theorem problem6 : f '' (S ∪ T) = (f '' S) ∪ (f '' T) := by
-  sorry
-  done
+  ext x
+  constructor
+  . rintro ⟨a, ⟨(a_in_s | a_in_u), fa_eq_x⟩⟩
+    . left
+      use a
+    . right
+      use a
+  . rintro (⟨a, ⟨a_in_s, fa_eq_x⟩⟩ | ⟨a, ⟨a_in_t, fa_eq_x⟩⟩)
+    rw [Set.mem_image] at ⊢
+    . use a
+      exact ⟨(by left; exact a_in_s), fa_eq_x⟩
+    . use a
+      exact ⟨(by right; exact a_in_t), fa_eq_x⟩
+
 
 -- (7) Image/preimage Galois connection.
 @[autogradedProof 6]
