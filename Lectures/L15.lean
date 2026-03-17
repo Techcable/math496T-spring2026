@@ -294,7 +294,17 @@ example : f ⁻¹' (Set.univ : Set β) = Set.univ := by
 -- (e) Challenge: Prove that if f is surjective, then
 -- U ⊆ f '' (f ⁻¹' U)  (so combined with (c), we get equality).
 example (hf : Function.Surjective f) : U ⊆ f '' (f ⁻¹' U) := by
-  sorry
+  intro y y_in_u
+  rw [Set.mem_image]
+  dsimp [Function.Surjective] at hf
+  obtain ⟨x, fx_eq_y⟩ := hf y
+  have x_in_preimage : x ∈ f⁻¹' U := by
+    rw [Set.mem_preimage]
+    rw [fx_eq_y]
+    exact y_in_u
+  use x
+
+
 
 
 -- ============================================================================

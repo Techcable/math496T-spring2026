@@ -57,6 +57,10 @@ bijection f : ℕ → α.  Its cardinality is denoted ℵ₀ (aleph-nought).
 In Lean/Mathlib, `Set.Countable S` means S is countable, and
 `Cardinal` provides the full cardinality API.  For this lecture, we work
 mostly with raw bijections and injections/surjections.
+
+# Nicholas Notes
+Lean defines ℤ as a sum type of `ofNat ℕ` and `negSucc ℕ`.
+See `zagzig` for an example of destructuring ℤ into ℕ.
 -/
 
 -- Recall the key definitions from Lectures 14–15:
@@ -120,11 +124,17 @@ example : Function.Bijective (id : α → α) := by
 
 -- (a) Prove that the successor function is injective on ℕ:
 example : Function.Injective (fun n : ℕ => n + 1) := by
-  sorry
+  dsimp [Function.Injective]
+  intro x y succ_eq
+  linarith
 
 -- (b) Prove that n ↦ n + 1 is NOT surjective on ℕ (0 has no preimage):
 example : ¬ Function.Surjective (fun n : ℕ => n + 1) := by
-  sorry
+  intro finj
+  dsimp [Function.Surjective] at finj
+  have := finj 0
+  omega
+
 
 /- Dedekind's definition:
 A set is infinite if it is in bijection with its proper subset.-/
@@ -134,7 +144,13 @@ A set is infinite if it is in bijection with its proper subset.-/
 -- Prove the injection part:
 example : Function.Injective (fun n : ℕ => n + 1) ∧
     ¬ Function.Surjective (fun n : ℕ => n + 1) := by
-  sorry
+  constructor
+  . simp [Function.Injective]
+  . intro finj
+    dsimp [Function.Surjective] at finj
+    have := finj 0
+    omega
+
 
 
 -- ============================================================================
@@ -252,7 +268,18 @@ example : zagzig (-5) = 9 := by native_decide
 -- (c) Prove that zagzig is also a bijection (since it is the inverse of
 -- a bijection — use the theorems above):
 theorem zagzig_bijective : Function.Bijective zagzig := by
-  sorry
+  -- Basd on `zigzag_bi
+  constructor
+  · -- Injective: if zigzag m = zigzag n, then m = n.
+    intro m n h
+    have hm := zigzag_zagzig m
+    have hn := zigzag_zagzig n
+    rw [h] at hm; linarith
+  · -- Surjective: for any z : ℤ, there exists n with zigzag n = z.
+    intro z
+    use zigzag z
+    exact zagzig_zigzag z
+
 
 -- (d) Prove: the function n ↦ n + 1 is a bijection ℤ → ℤ.
 -- (This is easy on ℤ, unlike ℕ!)
@@ -348,7 +375,11 @@ theorem singleton_injective : Function.Injective (fun a : α => (fun x : α => x
 -- (a) Prove Cantor's theorem for α → Bool instead of α → Prop.
 -- (This is closer to the "binary sequence" formulation.)
 theorem cantor_bool (f : α → (α → Bool)) : ¬ Function.Surjective f := by
-  sorry
+  intro surjf
+  let g := fun x =>  {y | (f x x) = true}
+  done
+
+
 
 -- (b) Complete the proof of the singleton injection in a different style:
 -- send a to the "membership predicate" (fun x => a = x) instead.
