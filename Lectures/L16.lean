@@ -375,9 +375,7 @@ theorem singleton_injective : Function.Injective (fun a : α => (fun x : α => x
 -- (a) Prove Cantor's theorem for α → Bool instead of α → Prop.
 -- (This is closer to the "binary sequence" formulation.)
 theorem cantor_bool (f : α → (α → Bool)) : ¬ Function.Surjective f := by
-  intro surjf
-  let g := fun x =>  {y | (f x x) = true}
-  done
+  sorry
 
 
 
