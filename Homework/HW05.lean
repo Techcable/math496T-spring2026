@@ -132,8 +132,22 @@ theorem problem6 : f '' (S ∪ T) = (f '' S) ∪ (f '' T) := by
 -- (7) Image/preimage Galois connection.
 @[autogradedProof 6]
 theorem problem7 : f '' S ⊆ U ↔ S ⊆ f ⁻¹' U := by
-  sorry
-  done
+  constructor
+  . intro fimage_sub_u x x_in_s
+    rw [Set.mem_preimage]
+    apply fimage_sub_u
+    rw [Set.mem_image]
+    use x
+  . intro s_sub_inv_u
+    intro x x_in_image_s
+    rw [Set.mem_image] at x_in_image_s
+    obtain ⟨a, ⟨a_in_s, fa_eq_x⟩⟩ := x_in_image_s
+    have a_in_inv_u : a ∈ f⁻¹' U := by
+      apply s_sub_inv_u
+      exact a_in_s
+    dsimp [Set.preimage] at a_in_inv_u
+    rw [fa_eq_x] at a_in_inv_u
+    exact a_in_inv_u
 
 -- (8) Image does not generally respect intersection.
 -- Provide an explicit counterexample where equality fails.
@@ -141,8 +155,39 @@ theorem problem7 : f '' S ⊆ U ↔ S ⊆ f ⁻¹' U := by
 theorem problem8 :
     ∃ (A B : Set ℕ) (g : ℕ → ℕ),
       (g '' (A ∩ B)) ≠ (g '' A ∩ g '' B) := by
-  sorry
-  done
+    -- the key is the fact the function is noninjective
+    -- Observe that in the integers, f(x)=x^2 fails for A={1}, B={-1}
+    -- For ℕ we achieve the same effect with truncating division
+    let g : ℕ → ℕ := fun x =>  x / 2
+    let A : Set ℕ := {0}
+    let B : Set ℕ := {1}
+    use A
+    use B
+    use g
+    have : g '' (A ∩ B) = ∅ := by
+      ext x
+      constructor
+      . rw [Set.mem_image]
+        rintro ⟨a, ⟨⟨a_in_a,a_in_b⟩,ga_eq_x⟩⟩
+        exfalso
+        dsimp [A,B] at a_in_a a_in_b
+        simp at *
+        linarith
+      . simp
+    rw [this]
+    dsimp only [A,B]
+    simp only [Set.image_singleton]
+    simp [g]
+    intro emptyset_eq_zero
+    let S : Set ℕ := {0}
+    have s_eq_empty : S = ∅ := (by rw [emptyset_eq_zero])
+    have nothing_in_s : ∀ (x : ℕ), ¬(x ∈ S) := by
+      rw [Set.eq_empty_iff_forall_notMem] at s_eq_empty
+      exact s_eq_empty
+    apply nothing_in_s 0
+    rfl
+
+
 
 -- (9) Cancellation application.
 -- Show that if g ∘ f is bijective, then f is injective and g is surjective.
@@ -150,7 +195,17 @@ theorem problem8 :
 theorem problem9 {f₁ : α → β} {g : β → γ}
     (h : Function.Bijective (g ∘ f₁)) :
     Function.Injective f₁ ∧ Function.Surjective g := by
-  sorry
-  done
-
+  let f := f₁ -- shorthand
+  constructor
+  . dsimp [Function.Injective]
+    intro x y fx_eq_fy
+    apply h.left
+    dsimp [Function.comp]
+    rw [fx_eq_fy]
+  . dsimp [Function.Surjective]
+    intro z
+    obtain ⟨x, gfx_eq_z⟩ := h.right z
+    use f x
+    rw [Function.comp] at gfx_eq_z
+    exact gfx_eq_z
 end
