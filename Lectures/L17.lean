@@ -44,7 +44,7 @@ Then define:
 
 Why this works — three cases for injectivity:
  1. x₁, x₂ ∈ A: h = f on both, and f is injective.
- 2. x₁, x₂ ∉ A: h = g⁻¹ on both, and g⁻¹ is injective (since g is).
+ 2. x₁, x₂ ∉ A: h = g⁻¹ on both, and g⁻¹ is injective (since g is a function).
  3. x₁ ∈ A, x₂ ∉ A: if h(x₁) = h(x₂) = b, then b = f(x₁) and g(b) = x₂.
    So x₂ = g(f(x₁)) ∈ Aₙ₊₁ ⊆ A — contradiction.
 
