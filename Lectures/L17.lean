@@ -83,7 +83,8 @@ My use is based on the expansion of the `fun` shorthand:
 theorem schroeder_bernstein {α β : Type*} {f : α → β} {g : β → α}
     (hf : Function.Injective f) (hg : Function.Injective g) :
     ∃ h : α → β, Function.Bijective h := by
-  sorry
+  -- Use theorem in Mathlib
+  apply Function.Embedding.schroeder_bernstein hf hg
 
 -- Quick demo of CSB: |ℕ| = |ℤ| (proved in L16 via explicit bijection,
 -- but now trivial via two injections).
