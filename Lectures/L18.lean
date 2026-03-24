@@ -215,6 +215,7 @@ example : 2 * S = n * (n + 1) := by
       rw [k_eq_2mp1]
       use 2 * m^2 + 3 *m + 1
       linarith
+  sorry -- there is no reason to believe that `n` and `k` are related
 end MySection
 
 
