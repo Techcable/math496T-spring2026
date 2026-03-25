@@ -198,7 +198,7 @@ end NotationDemo
 section MySection
 variable (k : ℕ)
 local notation "S" => k * (k + 1) / 2
-example : 2 * S = n * (n + 1) := by
+example : 2 * S = k * (k + 1) := by
   have hs_even : Even (k * (k + 1)) := by
     by_cases keven : Even k
     . obtain ⟨m, k_eq_2m⟩ := keven
@@ -215,9 +215,8 @@ example : 2 * S = n * (n + 1) := by
       rw [k_eq_2mp1]
       use 2 * m^2 + 3 *m + 1
       linarith
-  sorry -- there is no reason to believe that `n` and `k` are related
+  sorry
 end MySection
-
 
 -- ============================================================================
 -- ## Part 3: Uniqueness Makes Choice Predictable
