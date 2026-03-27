@@ -164,9 +164,6 @@ theorem problem7 (hf : Function.Injective f) (hg : Function.Injective g) :
     := by
     intro x y
     intro hgx_eq_hgy -- h(x) = h(y)
-    /-let disjoint_image_impossible (a a' : α) (aA : a ∈ A) (a'A : a' ∉ A)
-      : h a = h a' -> False := by
-      sorry-/
     by_cases xA : x ∈ A
     . by_cases yA : y ∈ A
       . -- x, y ∈ A
