@@ -156,21 +156,30 @@ theorem problem5 (a a' : α) (aA : a ∈ A)
   have b_neq_fa : b ≠ f a := b_nevereq_fy a aA
   contradiction
 
+
+
 @[autogradedProof 14]
 theorem problem7 (hf : Function.Injective f) (hg : Function.Injective g) :
   Function.Injective h
     := by
-    sorry
-     -- case 1: x,y ∈ A_all
-    --  exact problem3 (f := f) (g := g) (hg := hg) (a := a) (a' := a') aA a'A hf heq
-    -- pick_goal 3 -- allows us to jump to the last goal, leaving the hardest two case for desert
-     -- case 2: x,y ∉ A_all
-    -- .  sorry
-     -- case 3: x ∈ A_all, y ∉ A_all
-    -- .  sorry
-     -- case 4: x ∉ A_all, y ∈ A_all (interchanging roles of a and a')
-    -- .  sorry
-    done
+    intro x y
+    intro hgx_eq_hgy -- h(x) = h(y)
+    /-let disjoint_image_impossible (a a' : α) (aA : a ∈ A) (a'A : a' ∉ A)
+      : h a = h a' -> False := by
+      sorry-/
+    by_cases xA : x ∈ A
+    . by_cases yA : y ∈ A
+      . -- x, y ∈ A
+        apply problem3 f g hg xA yA hf hgx_eq_hgy
+      . -- x ∈ A, y ∉ A -- impossible since h(A) is disjoint from h(Aᶜ)
+        have : h x ≠ h y := problem5 f g hg x y xA yA
+        contradiction
+    . by_cases yA : y ∈ A
+      . -- x ∉ A, y ∈ A -- impossible
+        have : h x ≠ h y := (problem5 f g hg y x yA xA ).symm
+        contradiction
+      . -- x, y ∉ A
+        exact problem4 f g hg xA yA hgx_eq_hgy
 
 @[autogradedProof 6]
 theorem problem8 (hing : Function.Injective g) :
@@ -182,10 +191,11 @@ theorem problem8 (hing : Function.Injective g) :
     obtain ⟨n,An⟩ := hn
     rcases n with hzero | n
     -- g(b) ∉ A₀, since it is in range(g)
-    . sorry
-      -- HINTS:
-      -- exfalso
-      -- exact Set.mem_range_self b
+    . -- simp [ b] at bA
+      dsimp [layer,A₀] at An
+      rw [Set.mem_compl_iff] at An
+      have : g b ∈ Set.range g := Set.mem_range_self b
+      contradiction
     -- g(b) ∈ Aₙ₊₁, so we can find a ∈ Aₙ such that g(f(a)) = g(b),
     -- and hence f(a) = b by injectivity of g and problem1.
     . dsimp [layer] at An
@@ -201,7 +211,8 @@ theorem problem8 (hing : Function.Injective g) :
   -- using problem2 and injectivity of g.
   . use (g b)
     have hhh : g (h (g b)) = g b := by simp [problem2 (f := f) (g := g) (hg := hing) (x := g b) bA]
-    sorry
+    apply hg
+    exact problem2 f g hg (g b) bA
 
 
 
