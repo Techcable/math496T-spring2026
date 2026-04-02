@@ -1,4 +1,4 @@
--- import AutograderLib
+import AutograderLib
 import Mathlib.Tactic
 import Mathlib.Data.Real.Basic
 import Mathlib.Data.Real.Archimedean
@@ -37,8 +37,13 @@ contradicting the hypothesis.
 @[autogradedProof 5]
 theorem problem1 (x : ℝ) (hx : 0 ≤ x)
     (h : ∀ n : ℕ, 0 < n → x ≤ 1 / (↑n : ℝ)) : x = 0 := by
-  sorry
-  done
+  by_contra hnz
+  change x ≠ 0 at hnz
+  have hpos : 0 < x := lt_of_le_of_ne hx hnz.symm
+  have ⟨n,nrecip_lt_x⟩ : ∃ n : ℕ, 1/(n+1) < x := exists_nat_one_div_lt hpos
+  have hgtx := h (n+1) (by simp)
+  push_cast at hgtx
+  linarith
 
 
 -- ============================================================================
@@ -56,9 +61,13 @@ Hint: `nlinarith` can close this, possibly with the auxiliary fact
 
 @[autogradedProof 6]
 theorem problem2 (a b : ℝ) : a * b ≤ (a ^ 2 + b ^ 2) / 2 := by
-  sorry
-  done
-
+  have sum_squares_nonneg : (a+-b)^2 ≥ 0 := by simp [sq_nonneg]
+  have sum_squares_nonneg : a^2 - 2 * a * b + b^2 ≥ 0 := by
+    rw [add_pow_two] at sum_squares_nonneg
+    linarith
+  have two_sum_squares_nonneg : a^2 + b^2 ≥ 2 * a * b := by
+    linarith
+  linarith
 
 -- ============================================================================
 -- Problem 3 (6 points): `positivity` and `push_cast`
