@@ -33,6 +33,9 @@ sets `L` and `R` such that every element of `L` is less than every element of
 `R`.  Each such partition — a **Dedekind cut** — defines a real number.  The
 cut for `√2` is `L = { q ∈ ℚ : q < 0 ∨ q² < 2 }`.  The density of `ℚ` in
 `ℝ`, which we prove today, is the starting point of this construction.
+
+# Nicholas Notes
+Dr. Cherkis prefers ⌊x⌋ over ↑x to cast from ℝ to ℤ as it is more specific about casting direction.
 -/
 
 
@@ -85,12 +88,17 @@ theorem no_smallest_positive (x : ℝ) (hx : 0 < x) :
 -- Exercise (Part 1): The classical Archimedean property says every real is
 -- exceeded by some multiple of any positive number.
 example (a b : ℝ) (ha : 0 < a) : ∃ n : ℕ, b < ↑n * a := by
-  sorry
+  suffices ∃n : ℕ, (b / a) < ↑n by simp [← div_lt_iff₀ ha,this]
+  apply exists_nat_gt
+
+
 
 -- Exercise (Part 1): Every real number is bounded in absolute value by some
 -- natural number.
 example (x : ℝ) : ∃ n : ℕ, |x| < ↑n := by
-  sorry
+  simp [exists_nat_gt]
+
+
 
 
 -- ============================================================================
@@ -108,7 +116,7 @@ In Lean, the floor function for reals is `Int.floor`:
 #check Int.floor_le          -- ⌊a⌋ ≤ a
 #check Int.lt_floor_add_one  -- a < ⌊a⌋ + 1
 
--- The two key properties say exactly that `⌊x⌋ ≤ x < ⌊x⌋ + 1`:
+-- The two key properti es say exactly that `⌊x⌋ ≤ x < ⌊x⌋ + 1`:
 example (x : ℝ) : (⌊x⌋ : ℝ) ≤ x ∧ x < ↑⌊x⌋ + 1 :=
   ⟨Int.floor_le x, Int.lt_floor_add_one x⟩
 
@@ -140,13 +148,15 @@ lemma int_between {a b : ℝ} (h : a + 1 < b) :
 -- Hint: search for a Mathlib lemma, or use the characterization: an integer
 -- `m` equals `⌊y⌋` iff `↑m ≤ y ∧ y < ↑m + 1`.
 example (x : ℝ) (n : ℤ) : ⌊x + ↑n⌋ = ⌊x⌋ + n := by
-  sorry
+  rw [← Int.floor_add_intCast]
 
 -- Exercise (Part 2): Characterize the floor by trapping `x` in a unit interval.
 -- Hint: prove `⌊x⌋ ≤ m` and `m ≤ ⌊x⌋` using `Int.floor_le` and `Int.le_floor`.
 example (x : ℝ) (m : ℤ) (h₁ : (m : ℝ) ≤ x) (h₂ : x < (m : ℝ) + 1) :
     ⌊x⌋ = m := by
-  sorry
+  simp_all [Int.floor_eq_iff]
+  -- gives the same result:
+  -- aesop (add simp Int.floor_eq_iff)
 
 
 -- ============================================================================
@@ -300,7 +310,7 @@ The Archimedean property is the key tool: given `ε > 0`, we find `N` so that
 -- Hint: use `exists_rat_btwn` on `(0, ε)`.
 example (ε : ℝ) (hε : 0 < ε) :
     ∃ q : ℚ, 0 < (↑q : ℝ) ∧ (↑q : ℝ) < ε := by
-  sorry
+  apply density_of_rationals (x := 0) (y := ε) hε
 
 #check one_div_le_one_div_of_le
 -- Exercise (Part 5): Strengthen `exists_nat_one_div_lt` to an eventual bound
