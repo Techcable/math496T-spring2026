@@ -171,9 +171,20 @@ Suppose `c` belongs to every interval `[0, 1 / (n + 1)]`.  Prove that `c = 0`.
 theorem problem7 (c : ℝ)
     (h : ∀ n : ℕ, c ∈ Set.Icc (0 : ℝ) (1 / ((n : ℝ) + 1))) :
     c = 0 := by
-  sorry
-  done
-
+  have cNonNeg : 0 ≤ c := by
+    let h0 := h 0
+    simp [Set.Icc] at h0
+    exact h0.1
+  have cArbitrarilySmall : ∀ ε > 0, c < ε := by
+    intro ε εPos
+    have ⟨n,hN⟩ := exists_nat_one_div_lt εPos
+    have cSet := h n
+    simp [Set.Icc,-one_div] at cSet
+    linarith
+  apply le_antisymm ?_ cNonNeg
+  -- Took me forever to find this theorem
+  -- My Analysis professor called this "the epsilon principle"
+  apply le_of_forall_pos_lt_add (by simp_all)
 
 -- ============================================================================
 -- Problem 8 (8 points): Zero width means a single value
