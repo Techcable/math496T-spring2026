@@ -201,5 +201,8 @@ Hint: for `x ∈ S`, use `le_csSup` and `csInf_le`.
 theorem problem8 (S : Set ℝ) (hS : S.Nonempty) (hAbove : BddAbove S)
     (hBelow : BddBelow S) (hEq : sInf S = sSup S) :
     ∀ x ∈ S, x = sSup S := by
-  sorry
-  done
+  intro x xS
+  apply le_antisymm
+  . apply le_csSup hAbove xS
+  . rw [← hEq]
+    apply csInf_le hBelow xS
