@@ -1,4 +1,4 @@
--- import AutograderLib
+import AutograderLib
 import Mathlib.Tactic
 import Mathlib.Data.Real.Basic
 import Mathlib.Data.Real.Archimedean
@@ -29,8 +29,8 @@ If `a ≤ b`, then the midpoint `(a + b) / 2` also lies in `[a, b]`.
 @[autogradedProof 4]
 theorem problem1 (a b : ℝ) (h : a ≤ b) :
     (a + b) / 2 ∈ Set.Icc a b := by
-  sorry
-  done
+    simp [Set.Icc]
+    constructor <;> linarith
 
 
 -- ============================================================================
@@ -46,8 +46,10 @@ supremum is positive.
 theorem problem2 (S : Set ℝ) (hS : S.Nonempty) (hB : BddAbove S)
     (hpos : ∀ x ∈ S, 0 < x) :
     0 < sSup S := by
-  sorry
-  done
+  obtain ⟨x,xS⟩ := hS
+  have xLeSup : x ≤ sSup S := le_csSup hB xS
+  have xPos : 0 < x := hpos x xS
+  linarith
 
 
 -- ============================================================================
@@ -63,8 +65,27 @@ satisfy `x ≤ 3`.  For the `≥` direction, show that `3 ∈ S`.
 
 @[autogradedProof 6]
 theorem problem3 : sSup {x : ℝ | 0 ≤ x ∧ x ^ 2 ≤ 9} = 3 := by
-  sorry
-  done
+  let S := {x : ℝ | 0 ≤ x ∧ x ^ 2 ≤ 9}
+  show sSup S = 3
+  have S.nonempty : S.Nonempty := by
+    use 0
+    simp [S]
+  have threeS : 3 ∈ S := by
+      dsimp [S]
+      constructor <;> linarith
+  have S.bounded : BddAbove S := by
+    simp [BddAbove,upperBounds]
+    use 3
+    simp
+    intro x xS
+    simp [S] at xS
+    nlinarith
+  apply le_antisymm
+  . apply csSup_le S.nonempty ?_
+    intros;
+    simp_all [S]
+    nlinarith
+  . apply le_csSup S.bounded threeS
 
 
 -- ============================================================================
