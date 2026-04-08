@@ -100,8 +100,14 @@ There is no element `m ∈ (0, 1)` which is at least every other element of
 @[autogradedProof 6]
 theorem problem4 :
     ¬ ∃ m ∈ Set.Ioo (0 : ℝ) 1, ∀ x ∈ Set.Ioo (0 : ℝ) 1, x ≤ m := by
-  sorry
-  done
+  let I : Set ℝ := Set.Ioo 0 1
+  rintro ⟨x,xI,mUpperBound⟩
+  let mid : ℝ := (x + 1) / 2
+  have midLt1 : mid < 1 := by simp_all [mid,Set.Ioo]; linarith
+  have xLtMid : x < mid := by simp_all [mid]; linarith
+  have midI : mid ∈ I := by simp_all [I,Set.Ioo]; linarith
+  have midLtX : mid ≤ x := mUpperBound mid midI
+  linarith -- contradiction
 
 
 -- ============================================================================
@@ -119,8 +125,12 @@ Hint: argue by contradiction.  If every `t ∈ T` satisfies `t ≤ sSup S`, then
 theorem problem5 (S T : Set ℝ) (hT : T.Nonempty) (hB : BddAbove T)
     (h : sSup S < sSup T) :
     ∃ t ∈ T, sSup S < t := by
-  sorry
-  done
+  by_contra! allTLeSupS
+  let ⟨x,xT⟩ := hT
+  have xLeSupS : x ≤ sSup S := allTLeSupS x xT
+  have xLtSupT : x < sSup T := by linarith
+  have : sSup T ≤ sSup S  := csSup_le hT allTLeSupS
+  linarith -- contradiction
 
 
 -- ============================================================================
