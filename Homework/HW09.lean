@@ -148,9 +148,13 @@ theorem problem6 (S T : Set ℝ) (hS : S.Nonempty) (hT : T.Nonempty)
     (hSB : BddAbove S) (hTB : BddBelow T)
     (hsep : ∀ s ∈ S, ∀ t ∈ T, s ≤ t) :
     sSup S ≤ sInf T := by
-  sorry
-  done
-
+  have hsep' : ∀ t ∈ T, ∀ s ∈ S, s ≤ t := by
+    intro t hT s hS
+    apply hsep s hS t hT
+  have sSupLowerBoundT : sSup S ∈ lowerBounds T := by
+    intro x xT
+    apply csSup_le hS (hsep' x xT)
+  apply le_csInf hT sSupLowerBoundT
 
 -- ============================================================================
 -- Problem 7 (7 points): Nested intervals pinch to `0`
