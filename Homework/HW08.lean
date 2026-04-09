@@ -1,4 +1,4 @@
--- import AutograderLib
+import AutograderLib
 import Mathlib.Tactic
 import Mathlib.Data.Real.Basic
 import Mathlib.Data.Real.Archimedean
@@ -37,8 +37,13 @@ contradicting the hypothesis.
 @[autogradedProof 5]
 theorem problem1 (x : ℝ) (hx : 0 ≤ x)
     (h : ∀ n : ℕ, 0 < n → x ≤ 1 / (↑n : ℝ)) : x = 0 := by
-  sorry
-  done
+  by_contra hnz
+  change x ≠ 0 at hnz
+  have hpos : 0 < x := lt_of_le_of_ne hx hnz.symm
+  have ⟨n,nrecip_lt_x⟩ : ∃ n : ℕ, 1/(n+1) < x := exists_nat_one_div_lt hpos
+  have hgtx := h (n+1) (by simp)
+  push_cast at hgtx
+  linarith
 
 
 -- ============================================================================
@@ -56,9 +61,13 @@ Hint: `nlinarith` can close this, possibly with the auxiliary fact
 
 @[autogradedProof 6]
 theorem problem2 (a b : ℝ) : a * b ≤ (a ^ 2 + b ^ 2) / 2 := by
-  sorry
-  done
-
+  have sum_squares_nonneg : (a+-b)^2 ≥ 0 := by simp [sq_nonneg]
+  have sum_squares_nonneg : a^2 - 2 * a * b + b^2 ≥ 0 := by
+    rw [add_pow_two] at sum_squares_nonneg
+    linarith
+  have two_sum_squares_nonneg : a^2 + b^2 ≥ 2 * a * b := by
+    linarith
+  linarith
 
 -- ============================================================================
 -- Problem 3 (6 points): `positivity` and `push_cast`
@@ -72,8 +81,9 @@ as a real number.
 @[autogradedProof 6]
 theorem problem3 (n : ℕ) (hn : 0 < n) :
     (0 : ℝ) < (↑n) * (↑n + 1) := by
-  sorry
-  done
+  norm_cast
+  have np1_pos : n + 1 > 0 := by simp
+  simp [hn,np1_pos]
 
 
 -- ============================================================================
@@ -92,8 +102,16 @@ Hint: Consider δ = min(ε, 1) / 2, or split into cases on whether
 @[autogradedProof 7]
 theorem problem4 (ε : ℝ) (hε : 0 < ε) :
     ∃ δ : ℝ, 0 < δ ∧ δ < ε ∧ δ < 1 := by
-  sorry
-  done
+    by_cases elt1 : ε < 1
+    . use (ε/2)
+      simp [hε,elt1]
+      linarith
+    . simp at elt1
+      use (1/2 : ℝ)
+      have δgt0 : (1/2 : ℝ) > 0 := by simp
+      have δlt1 : (1/2 : ℝ) < 1 := by linarith
+      simp [-one_div]
+      linarith
 
 
 -- ============================================================================
@@ -109,10 +127,15 @@ than rounding the sum down once.
 
 #check Int.floor_le
 
+-- NOTE: There is a theorem `Int.le_floor_add` which is equivalent to problem5
+ -- I was stuck until the code for `Int.le_floor_add` showed me `le_floor` was a good first step
+#check Int.le_floor_add
+
 @[autogradedProof 8]
 theorem problem5 (x y : ℝ) : ⌊x⌋ + ⌊y⌋ ≤ ⌊x + y⌋ := by
-  sorry
-  done
+  rw [Int.le_floor]
+  push_cast
+  apply add_le_add <;> simp [Int.floor_le]
 
 
 -- ============================================================================
@@ -130,8 +153,11 @@ some q₁, then to (q₁, b) or (a, q₁) to get q₂.
 @[autogradedProof 10]
 theorem problem6 (a b : ℝ) (hab : a < b) :
     ∃ q₁ q₂ : ℚ, a < ↑q₁ ∧ (↑q₁ : ℝ) < ↑q₂ ∧ (↑q₂ : ℝ) < b := by
-  sorry
-  done
+  have ⟨q1, altq1, q1ltb⟩ := exists_rat_btwn hab
+  have ⟨q2, q1ltq2, q2ltb⟩ := exists_rat_btwn q1ltb
+  use q1
+  use q2
+  -- I guess `use` closes the goal?
 
 
 -- ============================================================================
@@ -155,5 +181,12 @@ Useful Mathlib facts:
 @[autogradedProof 8]
 theorem problem8 (p q : ℚ) (h : p < q) :
     ∃ z : ℝ, (↑p : ℝ) < z ∧ z < ↑q ∧ Irrational z := by
-  sorry
-  done
+  let sqrt2 := √2
+  have hshifted : p - sqrt2 < q - sqrt2 := by simp_all
+  have ⟨x_shifted,pltx_shifted,xltq_shifted⟩ := exists_rat_btwn hshifted
+  let x : ℝ := x_shifted + sqrt2
+  -- have x_shifted_rev : x_shifted = x - sqrt2 := by linarith
+  let x_irratonal : Irrational x := Irrational.ratCast_add x_shifted irrational_sqrt_two
+  have pltx : p < x := by linarith
+  have xltq : x < q := by linarith
+  use x -- use appears to close the goal

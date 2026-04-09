@@ -1,4 +1,4 @@
--- import AutograderLib
+import AutograderLib
 import Mathlib.Tactic
 import Mathlib.Data.Set.Basic
 import Mathlib.Data.Set.Lattice
@@ -61,16 +61,23 @@ example (A : Set α) (x : α) : x ∉ Aᶜ ↔ x ∈ A := @Set.notMem_compl_iff 
 @[autogradedProof 13]
 theorem problem1 {x : α} (hx : x ∉ sbA_all f g) :
     x ∈ Set.range g := by
-  sorry
-  done
+    dsimp [sbA_all] at hx
+    simp [Set.mem_iUnion_of_mem] at hx
+    have notin_layer_0 := hx 0
+    dsimp [sbLayer,sbA₀] at notin_layer_0
+    simp at *
+    exact notin_layer_0
+
+
 
 -- (2) Key lemma: if x ∈ sbLayer f g n for some n, then
 -- g(f(x)) ∈ sbLayer f g (n+1).
 @[autogradedProof 12]
 theorem problem2 {x : α} {n : ℕ} (hx : x ∈ sbLayer f g n) :
     g (f x) ∈ sbLayer f g (n + 1) := by
-  sorry
-  done
+  dsimp [sbLayer]
+  simp [Set.mem_image]
+  use x
 
 -- (3) Key lemma: if x ∉ A_all, then g⁻¹(x) is well-defined.
 -- Since x ∈ range(g) (by problem 1), there exists b with g(b) = x.
@@ -80,8 +87,17 @@ theorem problem2 {x : α} {n : ℕ} (hx : x ∈ sbLayer f g n) :
 @[autogradedProof 12]
 theorem problem3 {x : α} (hx : x ∉ sbA_all f g) (hg : Function.Injective g) :
     ∃! b : β, g b = x := by
-  sorry
-  done
+    have xin_range_g : x ∈ Set.range g := problem1 hx
+    simp [Set.mem_range] at xin_range_g
+    obtain ⟨y,gy_eq_x⟩ := xin_range_g
+    use y
+    constructor
+    . simp
+      exact gy_eq_x
+    . simp
+      intro z
+      rw [← gy_eq_x]
+      apply hg
 
 
 #check Set.mem_iUnion -- : x ∈ ⋃ i, s i ↔ ∃ i, x ∈ s i
@@ -94,5 +110,20 @@ theorem problem3 {x : α} (hx : x ∉ sbA_all f g) (hg : Function.Injective g) :
 @[autogradedProof 13]
 theorem problem4 (x : α) (hx : x ∉ sbA_all f g) (b : β) (hb : g b = x)
     (y : α) (hy : y ∈ sbA_all f g) : b ≠ f y := by
-  sorry
-  done
+    intro beq_f_y
+    dsimp [sbA_all] at hy
+    simp [Set.mem_iUnion_of_mem] at hy
+    obtain ⟨n, y_in_layer_n⟩ := hy
+    have gfy_eq_x : g (f y) = x := by
+      rw [beq_f_y] at hb
+      exact hb
+    have gfy_in_layer_nsucc : g (f y) ∈ sbLayer f g (n+1) := by
+      dsimp [sbLayer]
+      simp [Set.mem_image]
+      use y
+    have gfy_in_xall : g (f y) ∈ sbA_all f g := by
+      dsimp [sbA_all]
+      simp
+      use n+1
+    rw [gfy_eq_x] at gfy_in_xall
+    contradiction
