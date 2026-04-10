@@ -394,12 +394,56 @@ example : IsGLB {x : ℝ | 1 ≤ x ∧ x ≤ 4} 1 := by
 example (S T : Set ℝ) (hST : S ⊆ T) (hS : S.Nonempty) (hT : T.Nonempty)
     (hBelowT : BddBelow T) (hAboveT : BddAbove T) :
     sInf T ≤ sInf S ∧ sSup S ≤ sSup T := by
-  sorry
+  constructor
+  . have tInfLowerBoundS : sInf T ∈ lowerBounds S := by
+      intro x xS
+      have xT := hST xS
+      exact csInf_le hBelowT xT
+    exact le_csInf hS tInfLowerBoundS
+  . have tSupUpperBound : sSup T ∈ upperBounds S := by
+      intro x xS
+      have xT := hST xS
+      exact le_csSup hAboveT xT
+    exact csSup_le hS tSupUpperBound
 
 -- Challenging
 example : sSup {x : ℝ | 0 ≤ x ∧ x ^ 3 ≤ 27} = 3 := by
-  sorry
+  -- Not actually that challenging if you reduce to csInf_Icc
+  -- Only problem then becomes that rpow_le_rpow_iff is stated in terms of ℝ not ℕ
+  let S := {x : ℝ | 0 ≤ x ∧ x ^ 3 ≤ 27}
+  show sSup S = 3
+  let S' : Set ℝ := Set.Icc 0 3
+  suffices S = S' by (
+    rw [this];
+    apply csSup_Icc (by linarith)
+  )
+  have powReduce (x : ℝ) (xPos : x ≥ 0) : (x ^ 3 ≤ (3 : ℝ) ^ 3) ↔ x ≤ 3 := by
+    let realInequal := x ^ (3 : ℝ) ≤ (3 : ℝ) ^ (3 : ℝ)
+    constructor
+    . intro hPow
+      have hPow' : realInequal := by dsimp [realInequal]; exact_mod_cast hPow
+      exact (Real.rpow_le_rpow_iff xPos (by simp) (by simp)).mp hPow'
+    . intro hBound
+      exact_mod_cast ((Real.rpow_le_rpow_iff xPos (by simp) (by simp)).mpr hBound : realInequal)
+  ext x
+  constructor
+  . intro xS
+    simp_all [S,S']
+    exact (powReduce x xS.1).mp (by linarith)
+  . intro xS'
+    simp_all [S,S']
+    suffices x^3 ≤ (3:ℝ)^3 from (by linarith)
+    exact (powReduce x xS'.1).mpr (by linarith)
 
 -- Challenging
 example : sInf {x : ℝ | 1 ≤ x ∧ x ≤ 4} = 1 := by
-  sorry
+  -- Not actually challenging if you reduce to csInf_Icc
+  let S := {x : ℝ | 1 ≤ x ∧ x ≤ 4}
+  show sInf S = 1
+  let S' : Set ℝ := Set.Icc 1 4
+  suffices S = S' by (
+    rw [this];
+    apply csInf_Icc (by linarith)
+  )
+  ext x
+  constructor <;> intros; simp_all [S,S']
