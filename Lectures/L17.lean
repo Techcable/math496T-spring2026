@@ -44,7 +44,7 @@ Then define:
 
 Why this works — three cases for injectivity:
  1. x₁, x₂ ∈ A: h = f on both, and f is injective.
- 2. x₁, x₂ ∉ A: h = g⁻¹ on both, and g⁻¹ is injective (since g is).
+ 2. x₁, x₂ ∉ A: h = g⁻¹ on both, and g⁻¹ is injective (since g is a function).
  3. x₁ ∈ A, x₂ ∉ A: if h(x₁) = h(x₂) = b, then b = f(x₁) and g(b) = x₂.
    So x₂ = g(f(x₁)) ∈ Aₙ₊₁ ⊆ A — contradiction.
 
@@ -57,13 +57,34 @@ The full proof is Homework 6.
 `refine` is like `exact`, but lets you leave "holes" marked `?_`.
 Each hole becomes a new goal.  For instance, `refine ⟨?_, ?_⟩` on a
 conjunction splits it into two goals — one per component.
+
+# Nicholas Notes
+I learned that |ℕ × ℕ| = |ℕ| by using the function `fun ⟨x, y⟩ => 2^x * 3^y` along with `x => ⟨x, 0⟩`.
+However, since the first function was an injection and not a bijectiion,
+I was implicitly using Schröder–Bernstein wihtout realizing it.
+
+## New Tactics
+The `by_contra` proves x by assuming ¬ x and proving False.
+The `nlinarith` is slightly stronger than `linarith`,
+and works in some cases that `omega` doesn't.
+
+This is also the first time I am using the `match` keyword.
+My use is based on the expansion of the `fun` shorthand:
+```
+#check fun
+    | Int.ofNat x => (x : ℤ)
+    | Int.negSucc x => (x : ℤ)
+```
 -/
+
+
 
 -- We STATE CSB and use it freely; the proof is Homework 6.
 theorem schroeder_bernstein {α β : Type*} {f : α → β} {g : β → α}
     (hf : Function.Injective f) (hg : Function.Injective g) :
     ∃ h : α → β, Function.Bijective h := by
-  sorry
+  -- Use theorem in Mathlib
+  apply Function.Embedding.schroeder_bernstein hf hg
 
 -- Quick demo of CSB: |ℕ| = |ℤ| (proved in L16 via explicit bijection,
 -- but now trivial via two injections).
@@ -86,13 +107,18 @@ example : ∃ h : ℕ → ℤ, Function.Bijective h := by
 theorem csb_symmetric {α β : Type*} {f : α → β} {g : β → α}
     (hf : Function.Injective f) (hg : Function.Injective g) :
     ∃ h : β → α, Function.Bijective h := by
-  sorry
+  exact schroeder_bernstein hg hf
+
 
 -- (b) Use `refine` to structure a proof that id is bijective.
 example : Function.Bijective (id : α → α) := by
   refine ⟨?_, ?_⟩
-  · sorry
-  · sorry
+  · intro x y
+    dsimp [id]
+    exact id
+  · intro x
+    use x
+    dsimp
 
 
 -- ============================================================================
@@ -179,6 +205,8 @@ theorem cantorPair_same_diag_of_eq (m₁ n₁ m₂ n₂ : ℕ)
       _ = 2 * ((m + n) * (m + n + 1) / 2) + 2 * n := by
         rw [left_distrib]
       _ = (m + n) * (m + n + 1) + 2 * n := by
+        -- Dr. Cherkis called this the "hard part" because of the modular arithmetic
+        -- and the fact division is truncating. It took him "some time" to find the right name.
         rw [Nat.two_mul_div_two_of_even (Nat.even_mul_succ_self (m + n))]
   have hdbl : (m₁ + n₁) * (m₁ + n₁ + 1) + 2 * n₁ =
       (m₂ + n₂) * (m₂ + n₂ + 1) + 2 * n₂ := by
@@ -225,7 +253,9 @@ example : cantorPair (4, 0) = 10 := by native_decide
 -- (c) Prove: the function n ↦ (n, 0) is injective (the "trivial" pairing).
 -- Use this style: introduce, simplify, close with `exact`.
 example : Function.Injective (fun n : ℕ => (n, 0)) := by
-  sorry
+  intro x y fout_eq
+  simp at fout_eq
+  exact fout_eq
 
 
 -- ============================================================================
@@ -296,11 +326,56 @@ theorem rat_countable : ∃ h : ℕ → ℚ, Function.Bijective h := by
 
 -- (a) Use CSB to prove |ℕ × ℕ| = |ℕ| (bijection the other way):
 example : ∃ h : ℕ × ℕ → ℕ, Function.Bijective h := by
-  sorry
+  let f : ℕ × ℕ → ℕ := cantorPair
+  let g : ℕ → ℕ × ℕ := fun n => ⟨n, 0⟩
+  have finj : Function.Injective f := cantorPair_injective
+  have ginj : Function.Injective g := by
+    intro x y gx_eq_gy
+    dsimp [g] at gx_eq_gy
+    simp at gx_eq_gy
+    exact gx_eq_gy
+  apply schroeder_bernstein finj ginj
 
 -- (b) Prove |ℕ| = |ℤ| using CSB:
 example : ∃ h : ℕ → ℤ, Function.Bijective h := by
-  sorry
+  let f : ℕ → ℤ := fun n => (n : ℤ)
+  let g : ℤ → ℕ := fun
+    | Int.ofNat x => x * 2
+    | Int.negSucc x => x * 2 + 1
+  have finj : Function.Injective f := by
+    intro x y fx_eq_fy
+    simp [f] at fx_eq_fy
+    exact fx_eq_fy
+  have ginj : Function.Injective g := by
+    intro x y gx_eq_gy
+    dsimp [g] at gx_eq_gy
+    match x with
+    | Int.ofNat x =>
+      simp at gx_eq_gy
+      match y with
+        | Int.ofNat y =>
+          simp at gx_eq_gy ⊢
+          exact gx_eq_gy
+        | Int.negSucc y =>
+          simp at gx_eq_gy
+          omega -- contradiction
+    | Int.negSucc x =>
+      simp at gx_eq_gy
+      match y with
+        | Int.ofNat y =>
+          simp at gx_eq_gy ⊢
+          omega -- contradiction
+        | Int.negSucc y =>
+          simp at gx_eq_gy ⊢
+          exact gx_eq_gy
+  apply schroeder_bernstein finj ginj
+
+
+
+
+
+
+
 
 -- (c) Prove that the product of two countable types is countable.
 theorem countable_product {f : ℕ → α} {g : ℕ → β}

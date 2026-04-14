@@ -95,7 +95,19 @@ mathematically it is what makes `sInf S` the intended infimum of the set.
 
 -- Exercise (Part 1): Compute the infimum of a closed interval.
 example : sInf {x : ℝ | 1 ≤ x ∧ x ≤ 4} = 1 := by
-  sorry
+  let S := {x : ℝ | 1 ≤ x ∧ x ≤ 4}
+  have oneLowerBound : 1 ∈ lowerBounds S := by
+    simp [S,lowerBounds]
+    intros
+    linarith
+  have S.boundedBelow : BddBelow S := by use 1
+  show sInf S = 1
+  have oneMem : 1 ∈ S := by simp [S]
+  apply le_antisymm
+  . apply csInf_le S.boundedBelow oneMem
+  . refine le_csInf (by use 1) ?_
+    intros
+    simp_all [S]
 
 
 -- ============================================================================
@@ -168,7 +180,15 @@ theorem inf_sup_mem_Icc_of_subset
 -- Exercise (Part 2): Infimum is monotone in the reverse direction.
 example (S T : Set ℝ) (hST : S ⊆ T) (hS : S.Nonempty) (hT : BddBelow T) :
     sInf T ≤ sInf S := by
-  sorry
+  have nonemptyT : T.Nonempty := by
+    obtain ⟨x,xS⟩ := hS
+    use x
+    exact hST xS
+  refine le_csInf hS ?_
+  intro x xS
+  have xT := hST xS
+  refine csInf_le hT ?_
+  exact hST xS
 
 
 -- ============================================================================
@@ -286,7 +306,8 @@ lengths to tend to `0`.
 
 -- Exercise (Part 3): A concrete nested family.
 example (n : ℕ) : (0 : ℝ) ∈ Set.Icc (0 : ℝ) (1 / ((n : ℝ) + 1)) := by
-  sorry
+  simp [Set.Icc]
+  linarith
 
 
 -- ============================================================================
@@ -320,7 +341,21 @@ example (f : ℕ → ℝ) (h : ∀ n, f n ∈ Set.Icc (0 : ℝ) 1) :
 example : (⋂ n : ℕ, Set.Icc (0 : ℝ) (1 / ((n : ℝ) + 1))) ⊆ ({0} : Set ℝ) := by
   intro x hx
   simp only [Set.mem_singleton_iff]
-  sorry
+  have hx' := Set.mem_iInter.mp hx
+  have xBoundedNat : ∀ n : ℕ, x ≤ (1 / (↑n + 1)) := by
+    intro n
+    have := hx' n
+    simp_all [Set.Icc]
+  have xArbitrarilySmall : ∀ ε > 0, x < ε := by
+    intro ε εPos
+    have ⟨n,nLtε⟩ : ∃ n : ℕ, (1/(n+1)) < ε := exists_nat_one_div_lt εPos
+    have xLtE := xBoundedNat n
+    linarith
+  apply le_antisymm
+  . -- apply the "epsilon principle"
+    apply le_of_forall_pos_lt_add (by intros; simp_all)
+  . have := (hx' 0)
+    simp_all [Set.Icc]
 
 
 -- ============================================================================
@@ -329,11 +364,12 @@ example : (⋂ n : ℕ, Set.Icc (0 : ℝ) (1 / ((n : ℝ) + 1))) ⊆ ({0} : Set 
 
 -- Warm-up
 example : BddBelow (Set.Icc (3 : ℝ) 7) := by
-  sorry
+  use 3
+  simp_all [Set.Icc]
 
 -- Warm-up
 example : sInf (Set.Icc (3 : ℝ) 7) = 3 := by
-  sorry
+  exact csInf_Icc (by linarith)
 
 -- Warm-up
 example (a b x : ℝ) (h : a ≤ b) (hx : x ∈ Set.Icc a b) :
@@ -358,12 +394,56 @@ example : IsGLB {x : ℝ | 1 ≤ x ∧ x ≤ 4} 1 := by
 example (S T : Set ℝ) (hST : S ⊆ T) (hS : S.Nonempty) (hT : T.Nonempty)
     (hBelowT : BddBelow T) (hAboveT : BddAbove T) :
     sInf T ≤ sInf S ∧ sSup S ≤ sSup T := by
-  sorry
+  constructor
+  . have tInfLowerBoundS : sInf T ∈ lowerBounds S := by
+      intro x xS
+      have xT := hST xS
+      exact csInf_le hBelowT xT
+    exact le_csInf hS tInfLowerBoundS
+  . have tSupUpperBound : sSup T ∈ upperBounds S := by
+      intro x xS
+      have xT := hST xS
+      exact le_csSup hAboveT xT
+    exact csSup_le hS tSupUpperBound
 
 -- Challenging
 example : sSup {x : ℝ | 0 ≤ x ∧ x ^ 3 ≤ 27} = 3 := by
-  sorry
+  -- Not actually that challenging if you reduce to csInf_Icc
+  -- Only problem then becomes that rpow_le_rpow_iff is stated in terms of ℝ not ℕ
+  let S := {x : ℝ | 0 ≤ x ∧ x ^ 3 ≤ 27}
+  show sSup S = 3
+  let S' : Set ℝ := Set.Icc 0 3
+  suffices S = S' by (
+    rw [this];
+    apply csSup_Icc (by linarith)
+  )
+  have powReduce (x : ℝ) (xPos : x ≥ 0) : (x ^ 3 ≤ (3 : ℝ) ^ 3) ↔ x ≤ 3 := by
+    let realInequal := x ^ (3 : ℝ) ≤ (3 : ℝ) ^ (3 : ℝ)
+    constructor
+    . intro hPow
+      have hPow' : realInequal := by dsimp [realInequal]; exact_mod_cast hPow
+      exact (Real.rpow_le_rpow_iff xPos (by simp) (by simp)).mp hPow'
+    . intro hBound
+      exact_mod_cast ((Real.rpow_le_rpow_iff xPos (by simp) (by simp)).mpr hBound : realInequal)
+  ext x
+  constructor
+  . intro xS
+    simp_all [S,S']
+    exact (powReduce x xS.1).mp (by linarith)
+  . intro xS'
+    simp_all [S,S']
+    suffices x^3 ≤ (3:ℝ)^3 from (by linarith)
+    exact (powReduce x xS'.1).mpr (by linarith)
 
 -- Challenging
 example : sInf {x : ℝ | 1 ≤ x ∧ x ≤ 4} = 1 := by
-  sorry
+  -- Not actually challenging if you reduce to csInf_Icc
+  let S := {x : ℝ | 1 ≤ x ∧ x ≤ 4}
+  show sInf S = 1
+  let S' : Set ℝ := Set.Icc 1 4
+  suffices S = S' by (
+    rw [this];
+    apply csInf_Icc (by linarith)
+  )
+  ext x
+  constructor <;> intros; simp_all [S,S']

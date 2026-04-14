@@ -103,18 +103,40 @@ theorem sameParity_iff_fKernel (a b : ℕ) :
 -- ### Exercises (Part 1) — verify concrete instances
 
 -- (a) Check membership:
-example : SameParity 11 3     := by sorry   -- both odd
-example : CongMod 7 100 2     := by sorry   -- 7 ∣ 98
-example : CongMod 3 13 4      := by sorry   -- 3 ∣ 9
+example : SameParity 11 3     := by
+  dsimp [SameParity]
+  use 4
+  rfl
+example : CongMod 7 100 2     := by
+  dsimp [CongMod]
+  dsimp [Dvd.dvd]
+  use 14
+  rfl
+
+
+example : CongMod 3 13 4      := by
+  dsimp [CongMod]
+  dsimp [Dvd.dvd]
+  use 3
+  rfl
 
 -- (b) The kernel of List.length relates lists of equal length:
-example : fKernel List.length [1, 2, 3] [10, 20, 30] := by sorry
+example : fKernel List.length [1, 2, 3] [10, 20, 30] := by
+  dsimp [fKernel] -- apparently this is enough
+
+
 
 -- (c) Distinguish the relations:
 -- SameParity sees 1 and 3 as the same (both odd).
 -- CongMod 3 does not: 1 ≢ 3 (mod 3).
-example :   SameParity 1 3  := by sorry
-example : ¬ CongMod 3 1 3   := by sorry
+example :   SameParity 1 3  := by
+  dsimp [SameParity]
+  use -1
+  rfl
+example : ¬ CongMod 3 1 3   := by
+  intro hcong
+  dsimp [CongMod,Dvd.dvd] at hcong
+  omega
 
 -- ============================================================================
 -- ## Part 2: Equivalence Relations
@@ -202,20 +224,49 @@ example (a b c d : Set α) (h1 : a ⊆ b) (h2 : b ⊆ c) (h3 : c ⊆ d) : a ⊆ 
 
 -- (a) Prove equality on ℕ is an equivalence relation:
 example : Equivalence (· = · : ℕ → ℕ → Prop) where
-  refl  := by sorry
-  symm  := by sorry
-  trans := by sorry
+  refl  := by
+    intro x
+    rfl
+  symm  := by
+    intro x y heq
+    rw [heq]
+  trans := by
+    intro x y z xeqy yeqz
+    rw [xeqy]
+    exact yeqz
 
 -- (b) ≤ on ℕ is reflexive and transitive, but not symmetric:
-example : Reflexive  (· ≤ · : ℕ → ℕ → Prop) := by sorry
-example : Transitive (· ≤ · : ℕ → ℕ → Prop) := by sorry
-example : ¬ Symmetric (· ≤ · : ℕ → ℕ → Prop) := by sorry
+example : Reflexive  (· ≤ · : ℕ → ℕ → Prop) := by
+  intro x
+  rfl
+example : Transitive (· ≤ · : ℕ → ℕ → Prop) := by
+  intro x y z xlty yltz
+  -- This is cheating?
+  trans y
+  . exact xlty
+  . exact yltz
+
+example : ¬ Symmetric (· ≤ · : ℕ → ℕ → Prop) := by
+  intro h
+  dsimp [Symmetric] at h
+  have h1 : 1 ≤ 2 := by
+    linarith
+  have h2 : 2 ≤ 1 := by
+    apply h h1
+  contradiction
 
 -- (c) < on ℕ is irreflexive (so not an equivalence relation):
-example : Irreflexive (· < · : ℕ → ℕ → Prop) := by sorry
+example : Irreflexive (· < · : ℕ → ℕ → Prop) := by
+  intro x h
+  have : 0 < 0 := by
+    linarith
+  contradiction
 
 -- (d) Use `trans` to prove 12 ≡ 0 (mod 4) via intermediate value 8:
-example : CongMod 4 12 0 := by sorry
+example : CongMod 4 12 0 := by
+  dsimp [CongMod]
+  use 3
+  linarith
 
 -- (e) Use `calc` to prove CongMod 5 17 2 via the chain 17 ≡ 12 ≡ 7 ≡ 2:
 example : CongMod 5 17 2 := by sorry
@@ -555,11 +606,23 @@ In Lean/Mathlib, many familiar relations are already defined:
 
 -- Reflexive: every number divides itself
 example : Reflexive (· ∣ · : ℕ → ℕ → Prop) := by
-  sorry
+  intro x
+  use 1
+  linarith
 
 -- Transitive: if a ∣ b and b ∣ c then a ∣ c
 example : Transitive (· ∣ · : ℕ → ℕ → Prop) := by
-  sorry
+  rintro a b c ⟨k, b_mult_a⟩ ⟨m, c_mult_b⟩
+  dsimp [Dvd.dvd]
+  have : c = a * (k * m) := by
+    calc
+      c = (a * k) * m := by
+        rw [← b_mult_a]
+        exact c_mult_b
+      _ = a * (k * m) := by
+        rw [mul_assoc]
+  use (k * m)
+
 
 -- NOT symmetric: 2 ∣ 4 but ¬ (4 ∣ 2)
 example : ¬ Symmetric (· ∣ · : ℕ → ℕ → Prop) := by
