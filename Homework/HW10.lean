@@ -1,4 +1,4 @@
--- import AutograderLib
+import AutograderLib
 import Mathlib.Tactic
 import Mathlib.Data.Real.Basic
 import Mathlib.Data.Real.Archimedean
@@ -34,8 +34,25 @@ Prove that `1 / (2n + 1)` converges to `0`.
 
 @[autogradedProof 6]
 theorem problem1 : ConvergesTo (fun n => 1 / ((2 : ℝ) * n + 1)) 0 := by
-  sorry
-  done
+  intro ε εPos
+  have ⟨N,hN⟩ := exists_nat_one_div_lt εPos
+  use N
+  intro n nBound
+  simp [-one_div]
+  calc
+      |1 / (2 * (n : ℝ) + 1)|
+    _ = 1 / (2 * n + 1) := by exact abs_of_nonneg (by positivity)
+    _ ≤ 1 / (n + 1) := by (
+      apply one_div_le_one_div_of_le
+      . positivity
+      . linarith
+    )
+    _ ≤ 1 / (N + 1) := by (
+      apply one_div_le_one_div_of_le
+      . positivity
+      . simp_all
+    )
+    _ < ε := hN
 
 
 -- ============================================================================
@@ -50,8 +67,17 @@ at most `c`.
 @[autogradedProof 8]
 theorem problem2 (a : ℕ → ℝ) (L c : ℝ)
     (ha : ConvergesTo a L) (hc : ∀ n, a n ≤ c) : L ≤ c := by
-  sorry
-  done
+  by_contra! limitLarger
+  let ε := L - c
+  have εPos : ε > 0 := by linarith
+  have ⟨N,hAfterN⟩ := ha ε εPos
+  have dist_aN := hAfterN N (by simp)
+  rw [abs_sub_comm] at dist_aN
+  have cbound_aN := hc N
+  have aboveL : L < a N := by
+    rw [abs_of_nonneg (by linarith)] at dist_aN
+    linarith
+  linarith
 
 
 -- ============================================================================
@@ -67,8 +93,33 @@ Show that `(-1)^n` does not converge.
 
 @[autogradedProof 10]
 theorem problem3 : ¬ ∃ L : ℝ, ConvergesTo (fun n => (-1 : ℝ) ^ n) L := by
-  sorry
-  done
+  rintro ⟨L,hConverge⟩
+  by_cases hOne : L = 1
+  . have ⟨N,hN⟩ := hConverge 1 (by simp)
+    let n := N * 2 + 1
+    have n.odd : Odd n := by simp [n]
+    have an_close_neg1 := hN n (by dsimp [n]; linarith)
+    simp_all
+    rw [abs_of_neg (by linarith)] at an_close_neg1
+    linarith
+  . change L ≠ 1 at hOne
+    let ε : ℝ := |L - 1| / 2
+    have εPos : ε > 0 := by simp [ε,abs_sub_pos.mpr hOne]
+    have ⟨N,hN⟩ := hConverge ε εPos
+    let n := N * 2
+    have n.odd : Even n := by simp [n]
+    have Lclose1 := hN n (by dsimp [n]; linarith)
+    simp_all [ε]
+    by_cases Lgt1 : L > 1
+    . simp_all
+      rw [abs_sub_comm,abs_of_pos (by linarith)] at Lclose1
+      linarith
+    . have Llt1 : L < 1 := by
+        rw [lt_iff_le_and_ne]
+        simp_all
+      rw [abs_sub_comm L 1] at Lclose1
+      rw [abs_of_pos (by linarith)] at Lclose1
+      linarith
 
 
 -- ============================================================================
