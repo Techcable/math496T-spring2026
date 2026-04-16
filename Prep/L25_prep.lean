@@ -47,8 +47,7 @@ theorem exists_between_sup_minus_eps
   by_contra! h
   have hs : sSup S ≤ sSup S - ε := by
     apply csSup_le hS
-    intro x hx
-    exact h x hx
+    exact h
   linarith
 
 
@@ -90,12 +89,15 @@ example : Antitone (fun n : ℕ => 1 + 1 / ((n : ℝ) + 1)) := by
   simp
   apply inv_anti₀ -- NB
   positivity
+  norm_num
 
 
 -- The same decreasing-tail argument also shows the sequence is bounded below by
 -- its constant term.
-example : ∀ n, (1 : ℝ) ≤ 1 + 1 / ((n : ℝ) + 1) := by
-  sorry
+example : ∀ (n : ℕ), (1 : ℝ) ≤ 1 + 1 / ((n : ℝ) + 1) := by
+  intro n
+  suffices 0 ≤ 1/((n:ℝ)+1) by linarith
+  positivity
 
 
 -- ============================================================================
@@ -121,7 +123,7 @@ tail of the sequence lies inside the interval `(L - ε, L]`.
 -- (S : Set ℝ) (hS : S.Nonempty) (_hB : BddAbove S) (ε : ℝ) (hε : 0 < ε) :  ∃ x ∈ S, sSup S - ε < x
 -- If `ε > 0`, some element of the set lies above `sSup - ε`.
 
-#check le_csSup -- a ∈ s) → a ≤ sSup s
+#check le_csSup -- a ∈ s → a ≤ sSup s
 -- Every element of the set is at most the supremum.
 
 #check abs_of_nonpos -- (h : a ≤ 0) : |a| = -a
@@ -132,7 +134,7 @@ theorem monotone_convergence (a : ℕ → ℝ)
     (hmon : Monotone a) (hbdd : BddAbove (Set.range a)) :
     ConvergesTo a (sSup (Set.range a)) := by
   intro ε hε
-  obtain ⟨x,hx,hxsup⟩ := exists_between_sup_minus_eps (Set.range a)  ?_ hbdd ε hε
+  obtain ⟨x,hx,hxsup⟩ := exists_between_sup_minus_eps (Set.range a)  _ hbdd _ hε
   obtain ⟨N,hN⟩ := hx
   use N
   intro n hn
@@ -145,7 +147,17 @@ theorem monotone_convergence (a : ℕ → ℝ)
 -- If you wish, you can add a boundedness assumption, but it is not necessary here
 example (a : ℕ → ℝ) (L : ℝ) (hmon : Monotone a) (ha : ConvergesTo a L) :
     ∀ n, a n ≤ L := by
-  sorry
+  by_contra! hh
+  obtain ⟨N,hN⟩ := hh
+  unfold ConvergesTo at ha
+  obtain ⟨M,hM⟩ := ha (a N - L) (by simp [hN])
+  let P := max N M
+  have h1 : a N ≤ a P := by apply hmon; apply le_max_left
+  have h2 := by apply hM P (by apply le_max_right)
+  rw [abs_of_nonneg] at h2
+  linarith
+  . linarith
+
 
 
 -- ============================================================================
