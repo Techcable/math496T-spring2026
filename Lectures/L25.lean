@@ -1,4 +1,3 @@
-import MIL.Common
 import Mathlib.Tactic
 import Mathlib.Data.Real.Basic
 import Mathlib.Data.Real.Archimedean
@@ -27,20 +26,15 @@ The sequence
 
  `a₀ = 0`, `aₙ₊₁ = (aₙ + 2) / 3`
 
-does converge, and we can prove it without ever solving the recurrence. First,
-monotonicity and boundedness give existence of the limit. Then the recurrence
-itself forces the value of that limit. This is a good example of how structural
-theorems can replace explicit calculation.
+does converge, and we can prove it without ever solving the recurrence.
+First, monotonicity and boundedness give existence of the limit.
+Then the recurrence itself forces the value of that limit.
+This is a good example of how structural theorems can replace explicit calculation.
 -/
 
 
--- ============================================================================
--- ## Part 1: Two Recalled Definitions
--- ============================================================================
-
 /-
-Recall some Lecture 24 convergence facts in epsilon-N language.
-And the epsilon-approximation theorem for suprema from Lecture 22,
+Recall the ε-approximation theorem for suprema,
 which is the completeness input behind the Monotone Convergence Theorem.
 -/
 
@@ -59,46 +53,42 @@ theorem exists_between_sup_minus_eps
 
 
 -- ============================================================================
--- ## Part 2: Monotone Sequences
+-- ## Part 1: Monotone Sequences
 -- ============================================================================
 
 /-
-A sequence is monotone increasing if later terms are always at least as large
-as earlier ones. It is monotone decreasing if later terms are always at most as large.
+A sequence is *monotone increasing* if later terms are always at least as large
+as earlier ones.
+It is *monotone decreasing* if later terms are always at most as large.
 
 In practice, for sequences indexed by `ℕ`, it is often enough to compare
 adjacent terms.
 -/
 
-#check @Monotone ℕ ℝ _ _
-#check @Antitone ℕ ℝ _ _
+#check @Monotone ℕ ℝ _ _ -- ∀ ⦃a b⦄, a ≤ b → f a ≤ f b
+#check @Antitone ℕ ℝ _ _ -- ∀ ⦃a b⦄, a ≤ b → f b ≤ f a
 
 #check monotone_nat_of_le_succ
 -- To prove a sequence is increasing, it is enough to compare adjacent terms.
 
-#check antitone_nat_of_succ_le
+#check antitone_nat_of_succ_le --  ∀ (n : ℕ), f n ≤ f (n + 1)) → Monotone f
 -- Similarly for decreasing sequences.
 
 example : Monotone (fun n : ℕ => (n : ℝ) / ((n : ℝ) + 1)) := by
   apply monotone_nat_of_le_succ
   intro n
-  rw [show (((n + 1 : ℕ) : ℝ)) = (n : ℝ) + 1 by norm_num]
-  change (n : ℝ) / ((n : ℝ) + 1) ≤ ((n : ℝ) + 1) / ((n : ℝ) + 1 + 1)
-  have h1 : (0 : ℝ) < (n : ℝ) + 1 := by positivity
-  have h2 : (0 : ℝ) < (n : ℝ) + 1 + 1 := by positivity
-  rw [div_le_div_iff₀ h1 h2]
-  nlinarith
+  push_cast
+  rw [div_le_div_iff₀]
+  nlinarith <;> positivity
 
 example : Antitone (fun n : ℕ => 1 + 1 / ((n : ℝ) + 1)) := by
   apply antitone_nat_of_succ_le
   intro n
-  rw [show (((n + 1 : ℕ) : ℝ)) = (n : ℝ) + 1 by norm_num]
-  change 1 + 1 / ((n : ℝ) + 1 + 1) ≤ 1 + 1 / ((n : ℝ) + 1)
-  have h1 : (0 : ℝ) < (n : ℝ) + 1 := by positivity
-  have h12 : (n : ℝ) + 1 ≤ (n : ℝ) + 1 + 1 := by linarith
-  have hdiv : 1 / ((n : ℝ) + 1 + 1) ≤ 1 / ((n : ℝ) + 1) := by
-    exact one_div_le_one_div_of_le h1 h12
-  linarith
+  push_cast
+  simp
+  apply inv_anti₀ -- NB
+  positivity
+
 
 -- The same decreasing-tail argument also shows the sequence is bounded below by
 -- its constant term.
@@ -107,55 +97,47 @@ example : ∀ n, (1 : ℝ) ≤ 1 + 1 / ((n : ℝ) + 1) := by
 
 
 -- ============================================================================
--- ## Part 3: Why Both Hypotheses Matter
+-- ## Part 2: Why Both Hypotheses Matter
 -- ============================================================================
 
 /-
 The Monotone Convergence Theorem needs both monotonicity and boundedness.
-
 `a n = n` is monotone increasing but unbounded, so it cannot converge.
 `a n = (-1)^n` is bounded but not monotone, and it does not converge either.
-
 -/
-
-
--- ============================================================================
--- ## Part 4: The Monotone Convergence Theorem
--- ============================================================================
 
 /-
 Let `L = sSup (Set.range a)`.
-The *completeness* move says that for every `ε > 0`,
+*Completeness* says that for every `ε > 0`,
 some term of the sequence lies above `L - ε`.
 *Monotonicity* then pushes all later terms above `L - ε`.
 Since every term is at most `L`, the
 tail of the sequence lies inside the interval `(L - ε, L]`.
 -/
 
-#check exists_between_sup_minus_eps
+#check exists_between_sup_minus_eps -- : ∃ x ∈ S, sSup S - ε < x
+-- (S : Set ℝ) (hS : S.Nonempty) (_hB : BddAbove S) (ε : ℝ) (hε : 0 < ε) :  ∃ x ∈ S, sSup S - ε < x
 -- If `ε > 0`, some element of the set lies above `sSup - ε`.
 
-#check le_csSup
+#check le_csSup -- a ∈ s) → a ≤ sSup s
 -- Every element of the set is at most the supremum.
 
-#check abs_of_nonpos
-#check sub_nonpos
+#check abs_of_nonpos -- (h : a ≤ 0) : |a| = -a
+#check sub_nonpos --  a - b ≤ 0 ↔ a ≤ b
 -- These rewrite `|a n - L|` as `L - a n` once we know `a n ≤ L`.
 
 theorem monotone_convergence (a : ℕ → ℝ)
     (hmon : Monotone a) (hbdd : BddAbove (Set.range a)) :
     ConvergesTo a (sSup (Set.range a)) := by
   intro ε hε
-  obtain ⟨_, ⟨N, rfl⟩, hN⟩ :=
-    exists_between_sup_minus_eps (Set.range a) ⟨a 0, ⟨0, rfl⟩⟩ hbdd ε hε
+  obtain ⟨x,hx,hxsup⟩ := exists_between_sup_minus_eps (Set.range a)  ?_ hbdd ε hε
+  obtain ⟨N,hN⟩ := hx
   use N
   intro n hn
-  have hle : a n ≤ sSup (Set.range a) := by
-    exact le_csSup hbdd (Set.mem_range.mpr ⟨n, rfl⟩)
-  have hlo : sSup (Set.range a) - ε < a n := by
-    exact lt_of_lt_of_le hN (hmon hn)
-  rw [abs_of_nonpos (sub_nonpos.mpr hle)]
+  rw [abs_of_nonpos,neg_sub]
+  have hnN : a N ≤ a n := by apply hmon hn
   linarith
+  simp [le_csSup hbdd]
 
 -- A first direct consequence of monotone convergence ideas.
 example (a : ℕ → ℝ) (L : ℝ) (hmon : Monotone a) (ha : ConvergesTo a L) :
@@ -164,14 +146,13 @@ example (a : ℕ → ℝ) (L : ℝ) (hmon : Monotone a) (ha : ConvergesTo a L) :
 
 
 -- ============================================================================
--- ## Part 5: A Short Recall from Lecture 24
+-- ## Part 3: Recall from Lecture 24
 -- ============================================================================
 
 /-
 To identify the limit of a recursive sequence, it helps to know that convergence
 is preserved by simple algebraic operations and by shifting the index.
 
-From Lecture 24:
 -/
 
 theorem limit_unique (a : ℕ → ℝ) (L M : ℝ)
@@ -193,6 +174,7 @@ theorem limit_unique (a : ℕ → ℝ) (L M : ℝ)
   rw [abs_sub_comm L (a k)] at htri
   linarith
 
+-- `lim (aₙ + c) = (lim aₙ) + c`
 theorem add_const_converges (a : ℕ → ℝ) (L c : ℝ)
     (ha : ConvergesTo a L) :
     ConvergesTo (fun n => a n + c) (L + c) := by
@@ -205,6 +187,7 @@ theorem add_const_converges (a : ℕ → ℝ) (L c : ℝ)
   rw [hEq]
   exact h
 
+-- `lim (c*aₙ) = c* lim aₙ`
 theorem mul_const_converges (a : ℕ → ℝ) (L c : ℝ)
     (ha : ConvergesTo a L) :
     ConvergesTo (fun n => c * a n) (c * L) := by
@@ -228,6 +211,7 @@ theorem mul_const_converges (a : ℕ → ℝ) (L c : ℝ)
       field_simp [hcabs_ne]
     simpa [hEq'] using hmul
 
+-- `lim aₙ₊₁ = lim aₙ`
 theorem tail_converges (a : ℕ → ℝ) (L : ℝ)
     (ha : ConvergesTo a L) :
     ConvergesTo (fun n => a (n + 1)) L := by
@@ -241,11 +225,10 @@ theorem tail_converges (a : ℕ → ℝ) (L : ℝ)
 #check add_const_converges
 #check mul_const_converges
 #check limit_unique
--- These are the Lecture 24 tools that let us pass to the limit in a recurrence.
 
 
 -- ============================================================================
--- ## Part 6: A Recursive Sequence
+-- ## Part 4: A Recursive Sequence
 -- ============================================================================
 
 noncomputable def seq : ℕ → ℝ
@@ -266,7 +249,7 @@ lemma seq_lt_one : ∀ n, seq n < 1 := by
   · simp [seq]
     linarith
 
--- The same induction also shows all terms are nonnegative.
+-- The induction also shows all terms are nonnegative.
 example : ∀ n, 0 ≤ seq n := by
   sorry
 
@@ -277,41 +260,44 @@ lemma seq_monotone : Monotone seq := by
   linarith [seq_lt_one n]
 
 theorem seq_converges : ConvergesTo seq (sSup (Set.range seq)) := by
-  apply monotone_convergence
-  · exact seq_monotone
-  · refine ⟨1, ?_⟩
-    rintro x ⟨n, rfl⟩
-    exact le_of_lt (seq_lt_one n)
+  apply monotone_convergence seq seq_monotone
+  use 1
+  intro a ⟨n,hn⟩
+  apply le_of_lt
+  rw [←hn]
+  apply seq_lt_one
 
 /-
-The point of the recurrence is that it lets us identify the limit. If the
-sequence converges to `s`, then the shifted sequence `seq (n + 1)` converges to
-the same `s`.
+The point of the recurrence is that it lets us identify the limit.
+If the sequence converges to `s`, then the shifted sequence `seq (n + 1)` converges to the same `s`.
 
-But the recurrence also says that `seq (n + 1)` is obtained from
-`seq n` by the transformation `x ↦ (x + 2) / 3`, so its limit *if it exists*
+But the recurrence also says that `seq (n + 1)` is obtained from `seq n`
+by the transformation `x ↦ (x + 2) / 3`, so its limit *if it exists*
 must also be `(s + 2) / 3`.
 Uniqueness of limits then forces `s = (s + 2) / 3`, hence `s = 1`.
 -/
 
 theorem seq_limit_eq_one : sSup (Set.range seq) = 1 := by
   let s : ℝ := sSup (Set.range seq)
-  have hsconv : ConvergesTo seq s := by
-    simpa [s] using seq_converges
-  have hshift : ConvergesTo (fun n => seq (n + 1)) s := by
-    exact tail_converges seq s hsconv
-  have hadd : ConvergesTo (fun n => seq n + 2) (s + 2) := by
-    exact add_const_converges seq s 2 hsconv
-  have hmul : ConvergesTo (fun n => (1 / 3 : ℝ) * (seq n + 2)) ((1 / 3 : ℝ) * (s + 2)) := by
-    exact mul_const_converges (fun n => seq n + 2) (s + 2) (1 / 3) hadd
+  -- lim seqₙ = s
+  have hsconv : ConvergesTo seq s := by apply seq_converges
+  -- lim seqₙ₊₁ = s
+  have hshift : ConvergesTo (fun n => seq (n + 1)) s := tail_converges seq s hsconv
+  -- lim (seqₙ + 2) = s + 2
+  have hadd : ConvergesTo (fun n => seq n + 2) (s + 2) := add_const_converges seq s 2 hsconv
+  -- lim ((seqₙ + 2)/3) = (s+2) / 3
+  have hmul : ConvergesTo (fun n => (1 / 3 : ℝ) * (seq n + 2)) ((1 / 3 : ℝ) * (s + 2)) := mul_const_converges (fun n => seq n + 2) (s + 2) (1 / 3) hadd
+  -- lim ((seqₙ₊₁ + 2)/3) = (s+2) / 3
   have hrec : ConvergesTo (fun n => seq (n + 1)) ((1 / 3 : ℝ) * (s + 2)) := by
     have hEq : (fun n => seq (n + 1)) = (fun n => (1 / 3 : ℝ) * (seq n + 2)) := by
       funext n
-      simp [seq, div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc]
+      simp [seq] --, div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc]
+      linarith
     rw [hEq]
     exact hmul
-  have hfix : s = (1 / 3 : ℝ) * (s + 2) := by
-    exact limit_unique (fun n => seq (n + 1)) s ((1 / 3 : ℝ) * (s + 2)) hshift hrec
+  -- s = (s+2) / 3
+  have hfix : s = (1 / 3 : ℝ) * (s + 2) := limit_unique (fun n => seq (n + 1)) s ((1 / 3 : ℝ) * (s + 2)) hshift hrec
+  -- s=1
   linarith
 
 
@@ -320,10 +306,10 @@ theorem seq_limit_eq_one : sSup (Set.range seq) = 1 := by
 -- ============================================================================
 
 /-
-A Cauchy sequence is one whose terms eventually become close to each other.
+A Cauchy sequence is one all of whose terms eventually become close to each other.
 
-This is a different way of describing the idea that a sequence is settling
-down. In `ℝ`, the two notions are equivalent: a sequence converges if and only
+This is a different way of describing the idea that a sequence is settling down.
+In `ℝ`, the two notions are equivalent: a sequence converges if and only
 if it is Cauchy.
 
 The forward direction is a triangle-inequality argument. The reverse direction
