@@ -164,11 +164,71 @@ theorem mul_const_converges (a : ℕ → ℝ) (L c : ℝ)
 Prove that `n² / (n² + 1) → 1`.
 -/
 
+-- TODO: This is rather ugly :/
 @[autogradedProof 10]
 theorem problem4 :
     ConvergesTo (fun n => ((n : ℝ) ^ 2) / (((n : ℝ) ^ 2) + 1)) 1 := by
-  sorry
-  done
+  -- Observe that (n² / (n² + 1)) - 1 = -1/(n² + 1)
+  -- This clearly converges to 0 = 1-1
+  let a := fun n : ℕ => ((n : ℝ) ^ 2) / (((n : ℝ) ^ 2) + 1)
+  let b := fun n : ℕ => (-1 : ℝ) / ((n : ℝ)^2 + 1)
+  have b.negative : ∀ n : ℕ, b n < 0 := by
+    intro n
+    dsimp [b]
+    exact div_neg_of_neg_of_pos (by simp) (by positivity)
+  have haeq : a = b + 1 := by
+    funext k
+    dsimp [a,b]
+    let k2 : ℝ := k ^2
+    suffices k2 / (k2 + 1) - 1 = -1 / (k2 + 1) by linarith
+    calc
+          k2 / (k2 + 1) - 1
+      _ = (k2 - (k2 + 1) * 1) / (k2 + 1) := by rw [div_sub']; positivity
+      _ = (k2 - k2 - 1) / (k2 + 1) := by simp
+      _ = -1 / (k2 + 1) := by simp
+  have b.converges : ConvergesTo b 0 := by
+    intro ε εPos
+    have ⟨n,mBound⟩ := exists_nat_one_div_lt εPos
+    use n
+    intro m mGtN
+    let m2 := m ^ 2
+    have m2.aboveN : m2 ≥ n := by
+      dsimp [m2]
+      show n ≤ m ^ 2
+      -- not sure why I have to split into cases :/
+      -- there should be a theorem for this in mathlib
+      -- TODO: File an issue or ask on zulip?
+      by_cases mzero : m = 0
+      . suffices n = m ^2 by simp_all
+        rw [mzero]
+        simp
+        linarith
+        done
+      . change m ≠ 0 at mzero
+        have mpos : m > 0 := by positivity
+        calc
+          n ≤ m := mGtN
+          _ ≤ m * m := le_mul_of_one_le_left (by simp) (by linarith)
+          _ = m ^ 2 := by linarith
+    simp
+    rw [abs_of_neg (b.negative m)]
+    simp [b]
+    let denom := (m : ℝ) ^ 2 + 1
+    calc
+          -(-1 / denom)
+      _ = -(-(1 / denom)) := by rw [neg_div denom 1]
+      _ = 1 / denom := by simp
+      _ ≤ 1 / (↑n + 1) := by
+        apply one_div_le_one_div_of_le (by positivity)
+        dsimp [denom]
+        suffices ↑n ≤ ↑m ^ 2 by norm_cast; simp_all
+        exact m2.aboveN
+  have add_converges := add_const_converges b 0 1 b.converges
+  let a' := b + 1
+  simp_all
+  change ConvergesTo a' 1 at add_converges
+  show ConvergesTo a 1
+  simp_all [a',a,b]
 
 
 -- ============================================================================
