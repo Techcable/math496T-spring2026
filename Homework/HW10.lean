@@ -160,11 +160,27 @@ theorem mul_const_converges (a : ℕ → ℝ) (L c : ℝ)
 -- Problem 4 (10 points): An algebraic limit
 -- ============================================================================
 
+/-- Prove that a ≤ b → a ≤ b² n for all naturals.
+
+I could not find a theorem that handled the n = 0 case in mathlib.
+In fact, I couldn't even find the statement `n ≤ n²` for all naturals.
+The `le_mul_of_one_le_left` theorem is close but needlessly requires `n ≥ 1`.
+
+I should ask on zulip about this. -/
+lemma nat_le_squared {a b : ℕ} (h : a ≤ b) : a ≤ b^2  := by
+  by_cases bzero : b = 0
+  . nlinarith
+  . change b ≠ 0 at bzero
+    have npos : b > 0 := by positivity
+    calc
+      a ≤ b := h
+      _ ≤ b * b := le_mul_of_one_le_left (by linarith) (by linarith)
+      _ = b ^ 2 := by linarith
+
 /-
 Prove that `n² / (n² + 1) → 1`.
 -/
 
--- TODO: This is rather ugly :/
 @[autogradedProof 10]
 theorem problem4 :
     ConvergesTo (fun n => ((n : ℝ) ^ 2) / (((n : ℝ) ^ 2) + 1)) 1 := by
@@ -193,23 +209,7 @@ theorem problem4 :
     intro m mGtN
     let m2 := m ^ 2
     have m2.aboveN : m2 ≥ n := by
-      dsimp [m2]
-      show n ≤ m ^ 2
-      -- not sure why I have to split into cases :/
-      -- there should be a theorem for this in mathlib
-      -- TODO: File an issue or ask on zulip?
-      by_cases mzero : m = 0
-      . suffices n = m ^2 by simp_all
-        rw [mzero]
-        simp
-        linarith
-        done
-      . change m ≠ 0 at mzero
-        have mpos : m > 0 := by positivity
-        calc
-          n ≤ m := mGtN
-          _ ≤ m * m := le_mul_of_one_le_left (by simp) (by linarith)
-          _ = m ^ 2 := by linarith
+      simp [m2,nat_le_squared mGtN]
     simp
     rw [abs_of_neg (b.negative m)]
     simp [b]
