@@ -223,6 +223,7 @@ theorem problem4 :
         dsimp [denom]
         suffices ↑n ≤ ↑m ^ 2 by norm_cast; simp_all
         exact m2.aboveN
+      _ < ε := by linarith
   have add_converges := add_const_converges b 0 1 b.converges
   let a' := b + 1
   simp_all
@@ -299,7 +300,6 @@ to `1`.  The bound `hw_seq n ≤ 1` is provided above.
 @[autogradedProof 16]
 theorem problem5 : ConvergesTo hw_seq 1 := by
   let S : Set ℝ := Set.range hw_seq
-  let sup : ℝ := sSup S
   have one_upper_bound : 1 ∈ upperBounds S := by
     intro x ⟨k, hk⟩
     rw [← hk]
@@ -309,6 +309,13 @@ theorem problem5 : ConvergesTo hw_seq 1 := by
     simp [Set.Nonempty,S]
     use (hw_seq 0)
     use 0
+  let sup : ℝ := sSup S
+  have sup.pos : 0 < sup := by
+    let y : ℝ := 4 / 5
+    have y.memS : y ∈ S := by use 1; simp [y,hw_seq]
+    calc
+      0 < y := by simp [y]
+      _ ≤ sup := le_csSup hw_seq.bdd y.memS
   have hw_seq.monotone : Monotone hw_seq := by
     apply monotone_nat_of_le_succ
     intro n
@@ -324,39 +331,13 @@ theorem problem5 : ConvergesTo hw_seq 1 := by
     exact monotone_convergence hw_seq hw_seq.monotone hw_seq.bdd
   suffices 1 = sup by simp_all
   apply le_antisymm
-  . by_contra! sup_below1
-    let ε : ℝ := (1 - sup) / 2
-    have εPos : ε > 0 := by dsimp [ε]; linarith
-    let mid : ℝ := sup + ε
-    have mid.lt1 : mid < 1 := by simp [mid,ε]; linarith
-    -- TODO: This line is the problem (need to rewrite proof on paper)
-    have mid.lt_sup : mid ≤ sup := by simp [mid,ε]; linarith
-    obtain ⟨N,hN⟩ := hw_seq.conv ε εPos
-    have tail_beneath_mid : ∀ n : ℕ, n ≥ N → hw_seq n ≤ mid := by
-      intro n nExceedsN
-      let y := hw_seq n
-      have nBound := hN n (by linarith)
-      have y_below_sup : y ≤ sup  := by
-        have yInRange : y ∈ S := by simp [S,y]
-        exact le_csSup hw_seq.bdd yInRange
-      rw [abs_sub_comm,abs_of_nonneg (by linarith)] at nBound
-      linarith
-    have seqN_below_mid : hw_seq N ≤ mid := tail_beneath_mid N (by simp)
-    have seq.below_mid : ∀ n : ℕ, hw_seq n ≤ mid := by
-      intro n
-      by_cases nAboveN : n ≥ N
-      . exact tail_beneath_mid n nAboveN
-      . simp at nAboveN
-        calc
-          hw_seq n ≤ hw_seq N := by apply hw_seq.monotone (by linarith)
-                 _ ≤ mid := seqN_below_mid
-    have mid_upper_bound : mid ∈ upperBounds S := by
-      rintro x ⟨k,hk⟩
-      rw [← hk]
-      exact seq.below_mid k
-    have mid_ge1 : sup ≤ mid := by
-      exact csSup_le hw_seq.nonempty mid_upper_bound
-    linarith
+  . by_contra! supBelow1
+    let mid := (1 + sup) / 2
+    have mid.lt1 : mid < 1 := by dsimp [mid]; linarith
+    have mid.gtSup : mid > sup := by dsimp [mid]; linarith
+    let ε := (min (1 - sup) sup) / 4
+    have εPos : ε > 0 := by simp [ε]; constructor <;> linarith
+    sorry
   . simp [sup]
     apply Real.sSup_le ?_ (by simp)
     rintro x ⟨k,hk⟩
