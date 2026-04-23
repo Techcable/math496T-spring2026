@@ -299,6 +299,29 @@ to `1`.  The bound `hw_seq n ≤ 1` is provided above.
 
 @[autogradedProof 16]
 theorem problem5 : ConvergesTo hw_seq 1 := by
+  let base : ℝ := 1/5
+  -- hw_seq: 0, 4/5, 24/25, 124/125, ..
+  -- so the closed form is the following:
+  let hw_seq' : ℕ → ℝ := fun n => 1 - base^(n : ℝ)
+  have equiv_forms : hw_seq' = hw_seq := by
+    ext n
+    induction' n with n ih
+    . simp [hw_seq,hw_seq']
+    . simp [hw_seq]
+      rw [← ih]
+      dsimp [hw_seq']
+      symm
+      suffices (1 - base^(n : ℝ) + 4) / 5 = 1 - base ^ (n + 1 : ℝ) by exact_mod_cast this;
+      calc
+            (1 - base^(n : ℝ) + 4) / 5
+        _ = ((1 - base^(n : ℝ)) + 4) / 5 := by rfl
+        _ = (1 - base^(n : ℝ)) / 5 + 4 / 5 := by rw [← div_add_div_same]
+        _ = (1 / 5) - (base^(n : ℝ)) / 5 + 4 / 5 := by linarith
+        _ = (1 / 5) - (base^(n : ℝ)) * base + 4 / 5 := by dsimp [base]; linarith
+        _ = 1 - (base^(n : ℝ)) * base ^ (1 : ℝ) := by linarith
+        _ = 1 - (base^(n + 1 : ℝ)) := by rw [← Real.rpow_add]; simp [base]
+        _ = 1 - base ^ (n + 1 : ℝ) := by norm_cast
+  -- now to prove the main result
   let S : Set ℝ := Set.range hw_seq
   have one_upper_bound : 1 ∈ upperBounds S := by
     intro x ⟨k, hk⟩
@@ -331,13 +354,35 @@ theorem problem5 : ConvergesTo hw_seq 1 := by
     exact monotone_convergence hw_seq hw_seq.monotone hw_seq.bdd
   suffices 1 = sup by simp_all
   apply le_antisymm
-  . by_contra! supBelow1
-    let mid := (1 + sup) / 2
-    have mid.lt1 : mid < 1 := by dsimp [mid]; linarith
-    have mid.gtSup : mid > sup := by dsimp [mid]; linarith
-    let ε := (min (1 - sup) sup) / 4
-    have εPos : ε > 0 := by simp [ε]; constructor <;> linarith
-    sorry
+  . dsimp [sup]
+    apply (Real.le_sSup_iff hw_seq.bdd hw_seq.nonempty).mpr
+    intro ε' ε'Pos
+    let ε : ℝ := -ε'
+    have εPos : ε > 0 := by linarith
+
+    suffices ∃ x ∈ Set.range hw_seq, 1 < x + ε by
+      have revEquality : ∀ x, (1 + ε' < x) = (1 < x + ε) := by intros; simp [ε]
+      simp_all [revEquality]
+    have ⟨n,hn⟩ := exists_nat_one_div_lt (by positivity : ε > 0)
+    have ⟨pow,hpow⟩ := pow_unbounded_of_one_lt (n + 1) (by simp : 1 < 5)
+    let x := hw_seq pow
+    use x
+    constructor
+    . simp [x]
+    . have hinv_pow :  1/(5^pow : ℝ) < 1/(n +1 : ℝ) := by
+        have fivepow_pos : 0 < (5^pow : ℝ) := by positivity
+        have n1_pos : 0 < (n + 1 : ℝ) := by positivity
+        apply (one_div_lt_one_div fivepow_pos n1_pos).mpr
+        exact_mod_cast hpow
+      dsimp [x]
+      rw [← equiv_forms]
+      simp [hw_seq']
+      suffices base ^ pow < ε by linarith
+      calc
+            base ^ pow
+        _ = 1 / (5 ^ pow : ℝ) := by simp [base]
+        _ < 1 / (n + 1 : ℝ) := hinv_pow
+        _ < ε := hn
   . simp [sup]
     apply Real.sSup_le ?_ (by simp)
     rintro x ⟨k,hk⟩
