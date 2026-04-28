@@ -133,7 +133,38 @@ theorem continuousAt_of_seq {f : ℝ → ℝ} {c : ℝ}
 example (a b : ℝ) (seq : ℕ → ℝ) (c : ℝ)
     (hseq : ∀ n, seq n ∈ Set.Icc a b) (hconv : ConvergesTo seq c) :
     c ∈ Set.Icc a b := by
-  sorry
+  by_contra! hOutside
+  by_cases cAboveB : c > b
+  . let dist := c - b
+    have distPos : dist > 0 := by linarith
+    let ε := dist / 2
+    have εPos : ε > 0 := by positivity
+    have ⟨N,hN⟩ := hconv ε εPos
+    have hN' := hN N (by simp)
+    have seqNInside : seq N ∈ Set.Icc a b := hseq N
+    simp at seqNInside
+    rw [abs_sub_comm] at hN'
+    rw [abs_of_nonneg (by linarith : c - seq N ≥ 0)] at hN'
+    simp [ε,dist] at hN'
+    linarith
+  . simp at cAboveB
+    have cBelowA : c < a := by
+      by_contra! hNot
+      dsimp [Set.Icc] at hOutside
+      suffices c ≤ b by simp_all
+      exact cAboveB
+    let dist := a - c
+    have distPos : dist > 0 := by linarith
+    let ε := dist / 2
+    have εPos : ε > 0 := by positivity
+    have ⟨N,hN⟩ := hconv ε εPos
+    have hN' := hN N (by simp)
+    have seqNInside : seq N ∈ Set.Icc a b := hseq N
+    simp at seqNInside
+    rw [abs_of_nonneg (by linarith : seq N - c ≥ 0)] at hN'
+    simp [ε,dist] at hN'
+    linarith
+
 
 
 -- ============================================================================
@@ -161,8 +192,17 @@ Sequential compactness is strictly stronger than mere boundedness
 
 -- **Practice**: a singleton is sequentially compact.
 example (p : ℝ) : IsSeqCompact ({p} : Set ℝ) := by
-  sorry
-
+  intro a aInside
+  let id : ℕ → ℕ := fun n => n
+  use id
+  use p
+  simp [id,StrictMono]
+  intro e εPos
+  use 0
+  intro n _nPos
+  simp
+  have aConst : a n = p := aInside n
+  simp_all
 
 -- ============================================================================
 -- ## Part 3: Bolzano–Weierstrass (climax)
