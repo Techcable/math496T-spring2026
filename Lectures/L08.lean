@@ -14,14 +14,20 @@ Handouts: 1. Logic table, 2. Ring&group properties
 #check zero_mul
 
 -- Guess the name of relevant theorems game:
-example : n * 1 = n := sorry
-example : 1 * n = n := sorry
+example : n * 1 = n := by
+  apply mul_one
+example : 1 * n = n := by
+  apply one_mul
 
 #check mul_comm
 
-example {n m k:ℕ} : n * (m + k) = n * m + n * k := sorry
-example {n m k:ℕ} : (n + m) * k = n * k + m * k := sorry
-example {n m k:ℕ} : n * (m * k) = (n * m) * k := sorry
+example {n m k:ℕ} : n * (m + k) = n * m + n * k := by
+  apply mul_add
+
+example {n m k:ℕ} : (n + m) * k = n * k + m * k := by
+  apply add_mul
+example {n m k:ℕ} : n * (m * k) = (n * m) * k := by
+  rw [mul_assoc]
 
 /- ## Dependent Types
 - Dependent pairs:       `(a:α , b:β a)`

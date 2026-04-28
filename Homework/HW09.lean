@@ -1,4 +1,4 @@
--- import AutograderLib
+import AutograderLib
 import Mathlib.Tactic
 import Mathlib.Data.Real.Basic
 import Mathlib.Data.Real.Archimedean
@@ -29,8 +29,8 @@ If `a ≤ b`, then the midpoint `(a + b) / 2` also lies in `[a, b]`.
 @[autogradedProof 4]
 theorem problem1 (a b : ℝ) (h : a ≤ b) :
     (a + b) / 2 ∈ Set.Icc a b := by
-  sorry
-  done
+    simp [Set.Icc]
+    constructor <;> linarith
 
 
 -- ============================================================================
@@ -46,8 +46,10 @@ supremum is positive.
 theorem problem2 (S : Set ℝ) (hS : S.Nonempty) (hB : BddAbove S)
     (hpos : ∀ x ∈ S, 0 < x) :
     0 < sSup S := by
-  sorry
-  done
+  obtain ⟨x,xS⟩ := hS
+  have xLeSup : x ≤ sSup S := le_csSup hB xS
+  have xPos : 0 < x := hpos x xS
+  linarith
 
 
 -- ============================================================================
@@ -63,8 +65,27 @@ satisfy `x ≤ 3`.  For the `≥` direction, show that `3 ∈ S`.
 
 @[autogradedProof 6]
 theorem problem3 : sSup {x : ℝ | 0 ≤ x ∧ x ^ 2 ≤ 9} = 3 := by
-  sorry
-  done
+  let S := {x : ℝ | 0 ≤ x ∧ x ^ 2 ≤ 9}
+  show sSup S = 3
+  have S.nonempty : S.Nonempty := by
+    use 0
+    simp [S]
+  have threeS : 3 ∈ S := by
+      dsimp [S]
+      constructor <;> linarith
+  have S.bounded : BddAbove S := by
+    simp [BddAbove,upperBounds]
+    use 3
+    simp
+    intro x xS
+    simp [S] at xS
+    nlinarith
+  apply le_antisymm
+  . apply csSup_le S.nonempty ?_
+    intros;
+    simp_all [S]
+    nlinarith
+  . apply le_csSup S.bounded threeS
 
 
 -- ============================================================================
@@ -79,8 +100,14 @@ There is no element `m ∈ (0, 1)` which is at least every other element of
 @[autogradedProof 6]
 theorem problem4 :
     ¬ ∃ m ∈ Set.Ioo (0 : ℝ) 1, ∀ x ∈ Set.Ioo (0 : ℝ) 1, x ≤ m := by
-  sorry
-  done
+  let I : Set ℝ := Set.Ioo 0 1
+  rintro ⟨x,xI,mUpperBound⟩
+  let mid : ℝ := (x + 1) / 2
+  have midLt1 : mid < 1 := by simp_all [mid,Set.Ioo]; linarith
+  have xLtMid : x < mid := by simp_all [mid]; linarith
+  have midI : mid ∈ I := by simp_all [I,Set.Ioo]; linarith
+  have midLtX : mid ≤ x := mUpperBound mid midI
+  linarith -- contradiction
 
 
 -- ============================================================================
@@ -98,8 +125,12 @@ Hint: argue by contradiction.  If every `t ∈ T` satisfies `t ≤ sSup S`, then
 theorem problem5 (S T : Set ℝ) (hT : T.Nonempty) (hB : BddAbove T)
     (h : sSup S < sSup T) :
     ∃ t ∈ T, sSup S < t := by
-  sorry
-  done
+  by_contra! allTLeSupS
+  let ⟨x,xT⟩ := hT
+  have xLeSupS : x ≤ sSup S := allTLeSupS x xT
+  have xLtSupT : x < sSup T := by linarith
+  have : sSup T ≤ sSup S  := csSup_le hT allTLeSupS
+  linarith -- contradiction
 
 
 -- ============================================================================
@@ -117,9 +148,13 @@ theorem problem6 (S T : Set ℝ) (hS : S.Nonempty) (hT : T.Nonempty)
     (hSB : BddAbove S) (hTB : BddBelow T)
     (hsep : ∀ s ∈ S, ∀ t ∈ T, s ≤ t) :
     sSup S ≤ sInf T := by
-  sorry
-  done
-
+  have hsep' : ∀ t ∈ T, ∀ s ∈ S, s ≤ t := by
+    intro t hT s hS
+    apply hsep s hS t hT
+  have sSupLowerBoundT : sSup S ∈ lowerBounds T := by
+    intro x xT
+    apply csSup_le hS (hsep' x xT)
+  apply le_csInf hT sSupLowerBoundT
 
 -- ============================================================================
 -- Problem 7 (7 points): Nested intervals pinch to `0`
@@ -136,9 +171,20 @@ Suppose `c` belongs to every interval `[0, 1 / (n + 1)]`.  Prove that `c = 0`.
 theorem problem7 (c : ℝ)
     (h : ∀ n : ℕ, c ∈ Set.Icc (0 : ℝ) (1 / ((n : ℝ) + 1))) :
     c = 0 := by
-  sorry
-  done
-
+  have cNonNeg : 0 ≤ c := by
+    let h0 := h 0
+    simp [Set.Icc] at h0
+    exact h0.1
+  have cArbitrarilySmall : ∀ ε > 0, c < ε := by
+    intro ε εPos
+    have ⟨n,hN⟩ := exists_nat_one_div_lt εPos
+    have cSet := h n
+    simp [Set.Icc,-one_div] at cSet
+    linarith
+  apply le_antisymm ?_ cNonNeg
+  -- Took me forever to find this theorem
+  -- My Analysis professor called this "the epsilon principle"
+  apply le_of_forall_pos_lt_add (by simp_all)
 
 -- ============================================================================
 -- Problem 8 (8 points): Zero width means a single value
@@ -155,5 +201,8 @@ Hint: for `x ∈ S`, use `le_csSup` and `csInf_le`.
 theorem problem8 (S : Set ℝ) (hS : S.Nonempty) (hAbove : BddAbove S)
     (hBelow : BddBelow S) (hEq : sInf S = sSup S) :
     ∀ x ∈ S, x = sSup S := by
-  sorry
-  done
+  intro x xS
+  apply le_antisymm
+  . apply le_csSup hAbove xS
+  . rw [← hEq]
+    apply csInf_le hBelow xS

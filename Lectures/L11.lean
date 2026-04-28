@@ -374,7 +374,11 @@ variable (S T : Set α)
 -- 1a. If A i ⊆ S for all i, then ⋃ i, A i ⊆ S
 -- (We proved this as an example; now do it yourself.)
 example (h : ∀ i, A i ⊆ S) : ⋃ i, A i ⊆ S := by
-  sorry
+  intro x h
+  rw [Set.mem_iUnion] at h
+  obtain ⟨i, hai⟩ := h
+  apply h i
+  exact hai
 
 -- 1b. ⋃ i, A i = ⋃ i, A i ∪ ∅
 -- (Union with empty set doesn't change anything.)

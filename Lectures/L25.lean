@@ -92,12 +92,15 @@ example : Antitone (fun n : ℕ => 1 + 1 / ((n : ℝ) + 1)) := by
   positivity
   linarith
 
+-- proves a⁻¹ ≤ b⁻¹
+#check inv_anti₀
 
 -- The same decreasing-tail argument also shows the sequence is bounded below by
 -- its constant term.
-example : ∀ n, (1 : ℝ) ≤ 1 + 1 / ((n : ℝ) + 1) := by
-  sorry
-
+example : ∀ n : ℕ, (1 : ℝ) ≤ 1 + 1 / ((n : ℝ) + 1) := by
+  intro n
+  apply (le_add_iff_nonneg_right 1).mpr
+  positivity
 
 -- ============================================================================
 -- ## Part 2: Why Both Hypotheses Matter
@@ -133,7 +136,10 @@ theorem monotone_convergence (a : ℕ → ℝ)
     (hmon : Monotone a) (hbdd : BddAbove (Set.range a)) :
     ConvergesTo a (sSup (Set.range a)) := by
   intro ε hε
-  obtain ⟨x,hx,hxsup⟩ := exists_between_sup_minus_eps (Set.range a)  ?_ hbdd ε hε
+  have a.nonempty : (Set.range a).Nonempty := by
+    use a 0
+    simp
+  obtain ⟨x,hx,hxsup⟩ := exists_between_sup_minus_eps (Set.range a) a.nonempty hbdd ε hε
   obtain ⟨N,hN⟩ := hx
   use N
   intro n hn
@@ -142,12 +148,38 @@ theorem monotone_convergence (a : ℕ → ℝ)
   linarith
   simp [le_csSup hbdd]
 
+
 -- A first direct consequence of monotone convergence ideas.
 -- If you wish, you can add a boundedness assumption, but it is not necessary here
 example (a : ℕ → ℝ) (L : ℝ) (hmon : Monotone a) (ha : ConvergesTo a L) :
     ∀ n, a n ≤ L := by
-  sorry
-
+  by_contra! exceedsL
+  obtain ⟨n,exceedsL⟩ := exceedsL
+  let x := a n
+  let dist := x - L
+  have distPos : dist > 0 := by linarith
+  let ε := dist / 2
+  have εPos : ε > 0 := by simp [ε,x]; linarith
+  let ⟨m,hbound⟩ := ha ε εPos
+  suffices dist < ε by simp_all [ε,dist]; linarith
+  have ⟨k,xBelowAk,akClose⟩ : ∃ k : ℕ, x ≤ a k ∧ |a k - L| < ε := by
+    by_cases n_le_m : n ≤ m
+    . have mBound := hbound m (by simp)
+      have xBelowAM : x ≤ a m := by
+        dsimp [x]
+        exact hmon (by linarith)
+      use m
+    . simp at n_le_m
+      use n
+      constructor
+      . linarith
+      . exact hbound n (by linarith)
+  let dist' := a k - L
+  calc
+      dist
+    _ ≤ dist' := by linarith
+    _ ≤ |dist'| := by rw [abs_of_pos (by linarith)]
+    _ < ε := by dsimp [dist']; exact akClose
 
 -- ============================================================================
 -- ## Part 3: Recall from Lecture 24

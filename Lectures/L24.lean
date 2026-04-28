@@ -68,7 +68,21 @@ theorem one_div_succ_converges : ConvergesTo (fun n => 1 / ((n : ℝ) + 1)) 0 :=
 -- Shifting the denominator by a fixed amount does not change the
 -- convergence behavior.
 example : ConvergesTo (fun n => 1 / ((n : ℝ) + 5)) 0 := by
-  sorry
+  intro ε εPos
+  let ⟨N, hN⟩ := exists_nat_one_div_lt εPos
+  use (N + 6)
+  intro n nBound
+  have nBound' : N ≤ n + 4 := by linarith
+  have nBound'' : N + 1 ≤ n + 5 := by linarith
+  -- have nBound''' := (n + 5)⁻¹ ≥ (N+1)⁻¹ :=
+
+  simp_all [-one_div]
+  calc
+    |1 / (n + 5 : ℝ)| = 1 / ↑(n + 5) := by (simp; positivity)
+                    _ = (↑n + 5)⁻¹ := by simp_all
+                    _ ≤ (↑N + 1)⁻¹ := by gcongr <;> linarith
+                      _ < ε := by (simp at hN; exact_mod_cast hN)
+
 
 -- ============================================================================
 -- ## Part 2: Uniqueness of Limits
@@ -116,7 +130,7 @@ theorem limit_unique (a : ℕ → ℝ) (L M : ℝ)
 -- A first direct use of uniqueness.
 example (a : ℕ → ℝ) (L : ℝ)
     (h0 : ConvergesTo a 0) (hL : ConvergesTo a L) : L = 0 := by
-  sorry
+  exact limit_unique a L 0 hL h0
 
 
 -- ============================================================================
