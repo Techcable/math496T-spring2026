@@ -1,4 +1,4 @@
--- import AutograderLib
+import AutograderLib
 import Mathlib.Tactic
 import Mathlib.Data.Real.Basic
 import Mathlib.Data.Real.Archimedean
@@ -63,9 +63,33 @@ example (a b c :ℝ) : a * b / c = a * (b/c) := by apply mul_div_assoc
 
 @[autogradedProof 9]
 theorem problem1 (a b : ℝ) : IsOpenSet (Set.Ioo a b) := by
-  sorry
-  done
-
+  dsimp [IsOpenSet]
+  intro x xMem
+  have ⟨xGta,xLtB⟩ := xMem
+  let dist : ℝ := min (x - a) (b - x)
+  let ε := dist / 2
+  have εPos : ε > 0 := by simp [dist,ε]; assumption
+  use ε
+  simp_all
+  intro y yDist
+  have hε := abs_lt.mp yDist
+  constructor
+  . have eSmall : ε < (x - a) := by
+      suffices dist <= x - a by dsimp [ε,dist]; linarith
+      apply min_le_left
+    show a < y
+    calc
+      a < x - ε := by linarith
+      _ < x + (y - x) := by linarith
+      _ = y := by linarith
+  . have eSmall : ε < (b - x) := by
+      suffices dist <= b - x by dsimp [ε,dist]; linarith
+      apply min_le_right
+    suffices b > y by simp_all
+    calc
+      b = x + (b - x) := by linarith
+      _ > x + ε := by linarith
+      _ > y := by linarith
 
 -- ============================================================================
 -- Problem 2: Sequence → closure point (forward direction)
@@ -82,8 +106,13 @@ example (a : ℝ) : a ≤ a := le_refl a
 theorem problem2 (S : Set ℝ) (x : ℝ) (a : ℕ → ℝ)
     (haS : ∀ n, a n ∈ S) (hconv : ConvergesTo a x) :
     IsClosurePt x S := by
-  sorry
-  done
+  dsimp [IsClosurePt]
+  intro ε εPos
+  have ⟨N,hN⟩ := hconv ε εPos
+  use a N
+  constructor
+  . exact haS N
+  . exact hN N (by simp)
 
 
 -- ============================================================================
@@ -96,8 +125,9 @@ theorem problem2 (S : Set ℝ) (x : ℝ) (a : ℕ → ℝ)
 
 @[autogradedProof 6]
 theorem problem3 (c : ℝ) : ContAt (fun x => x) c := by
-  sorry
-  done
+  intro ε εPos
+  use ε
+  simp_all
 
 /-
 4 (4 pts): Every affine function `x ↦ m * x + b` is continuous
@@ -106,8 +136,25 @@ at every `c`.
 
 @[autogradedProof 8]
 theorem problem4 (m b c : ℝ) : ContAt (fun x => m * x + b) c := by
-  sorry
-  done
+  dsimp [ContAt]
+  intro ε εPos
+  let factor := |m| + 1
+  have factor.pos : factor > 0 := by positivity
+  use (ε / factor)
+  constructor
+  . positivity
+  . intro x hxDist
+    simp
+    show |m * x - m * c| < ε
+    have hxDist' : factor * |x - c| < ε := by
+      rw [mul_comm]
+      exact (lt_div_iff₀ (by positivity)).mp hxDist
+    calc
+          |m * x - m * c|
+      _ = |m * (x - c)| := by rw [← mul_sub]
+      _ = |m| * |x - c| := by rw [abs_mul]
+      _ ≤ factor * |x - c| := by bound
+      _ < ε := hxDist'
 
 
 -- ============================================================================
@@ -131,8 +178,51 @@ theorem problem5 (f : ℝ → ℝ)
     (hcont : ∀ c ∈ Set.Icc (0 : ℝ) 1, ContAt f c)
     (h0 : 0 < f 0) (h1 : f 1 < 1) :
     ∃ c ∈ Set.Ioo (0 : ℝ) 1, f c = c := by
-  sorry
-  done
+  let S := Set.Icc (0 : ℝ) 1
+  let g : ℝ → ℝ := fun x => x - f x
+  have gcont : ∀ x ∈ S, ContAt g x := by
+    intro x xS
+    dsimp [ContAt]
+    intro ε εPos
+    have ⟨δ,δPos,hδ⟩ := hcont x (by simp_all [Set.Icc,S]) (ε/2) (by positivity)
+    let δ' := min δ (ε / 2)
+    use δ'
+    constructor
+    . positivity
+    . intro y yBound
+      have distSmall : |x - y| < ε / 2 := by
+        have : δ' ≤ ε / 2 := by apply min_le_right
+        rw [abs_sub_comm]
+        linarith
+      have yBound' : |y - x| < δ := by
+        calc
+            |y - x|
+          _ < δ' := by assumption
+          _ ≤ δ := by apply min_le_left
+      have fDistSmall : |f y - f x| < ε / 2 := hδ y yBound'
+      -- i originally proved this for -g, so proved |(-g) y - (-g) x| < ε
+      -- Due to linarith playing poorly with abs, I had to do everything by hand
+      -- As a result, it is easier to rearrange the norm and then reuse my proof for -g
+      calc
+            |g y - g x|
+        _ = |-(g y - g x)| := by rw [abs_neg]
+        _ = |-(g y) - -(g x)| := by rw [neg_sub']
+        _ = |-(y - f y) - -(x - f x)| := by dsimp [g]
+        -- now this is my original proof
+        _ = |(f y - y) - (f x - x)| := by rw [neg_sub,neg_sub]
+        _ = |f y - y - f x + x| := by rw [sub_add]
+        _ = |f y - f x - y + x| := by simp [sub_right_comm]
+        _ = |(f y - f x) + (x - y)| := by rw [add_comm_sub]
+        _ ≤ |f y - f x| + |x - y| := by apply abs_add_le
+        _ < |f y - f x| + (ε / 2) := by linarith
+        _ < ε := by linarith
+  have g.upper : g 1 > 0 := by simp [g]; assumption
+  have g.lower : g 0 < 0 := by simp [g]; assumption
+  obtain ⟨c,hMem,cfixpoint⟩ := @IVT g 0 1 (by linarith) gcont g.lower g.upper
+  use c
+  constructor
+  . assumption
+  . linarith
 
 #check abs_add
 
