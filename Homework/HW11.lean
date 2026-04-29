@@ -153,7 +153,10 @@ theorem problem4 (m b c : ℝ) : ContAt (fun x => m * x + b) c := by
           |m * x - m * c|
       _ = |m * (x - c)| := by rw [← mul_sub]
       _ = |m| * |x - c| := by rw [abs_mul]
-      _ ≤ factor * |x - c| := by bound
+      _ ≤ factor * |x - c| := by
+        apply mul_le_mul_of_nonneg_right
+        . linarith
+        . positivity
       _ < ε := hxDist'
 
 
