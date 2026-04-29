@@ -248,5 +248,8 @@ theorem problem6 (f : ℝ → ℝ) (a b : ℝ) (hab : a ≤ b)
     (hcont : ∀ c ∈ Set.Icc a b, ContAt f c)
     (hpos : ∀ x ∈ Set.Icc a b, 0 < f x):
     ∃ m > 0, ∀ x ∈ Set.Icc a b, m ≤ f x := by
-    sorry
-    done
+    have ⟨m,mRange,mLowerBound⟩ := evt_min hab hcont
+    use (f m)
+    constructor
+    . exact hpos m mRange
+    . exact mLowerBound
