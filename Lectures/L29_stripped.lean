@@ -50,10 +50,22 @@ def IsSeqCompact (K : Set ℝ) : Prop :=
 /-- Uniqueness of limits (from L24), restated locally. -/
 private theorem limit_unique (a : ℕ → ℝ) (L M : ℝ)
     (hL : ConvergesTo a L) (hM : ConvergesTo a M) : L = M := by
-  -- choose ε = |L - M| / 2
-  -- use both limits at same ε
-  -- triangle inequality at max NL NM
-  sorry
+  by_contra h
+  have hε : 0 < |L - M| / 2 := by
+    have hdist : 0 < |L - M| := abs_pos.mpr (sub_ne_zero.mpr h)
+    positivity
+  obtain ⟨N₁, hN₁⟩ := hL _ hε
+  obtain ⟨N₂, hN₂⟩ := hM _ hε
+  let k := max N₁ N₂
+  have h1 := hN₁ k (le_max_left N₁ N₂)
+  have h2 := hN₂ k (le_max_right N₁ N₂)
+  have htri : |L - M| ≤ |L - a k| + |a k - M| := by
+    have hdecomp : L - M = (L - a k) + (a k - M) := by ring
+    calc
+      |L - M| = |(L - a k) + (a k - M)| := by rw [hdecomp]
+      _ ≤ |L - a k| + |a k - M| := abs_add_le _ _
+  rw [abs_sub_comm L (a k)] at htri
+  linarith
 
 
 
@@ -78,7 +90,28 @@ The minimum half is a one-line consequence of the max half applied to `−f`.
 theorem evt_min {K : Set ℝ} (hK : IsSeqCompact K) (hKne : K.Nonempty)
     {f : ℝ → ℝ} (hcont : ∀ c ∈ K, ContinuousAt f c) :
     ∃ xmin ∈ K, ∀ x ∈ K, f xmin ≤ f x := by
-  sorry
+  let g := -f
+  have gcont : ∀ c ∈ K, ContinuousAt g c := by
+    intro c hc ε hε
+    obtain ⟨δ, hδ, h⟩ := hcont c hc ε hε
+    use δ, hδ
+    intro x hx
+    specialize h x hx
+    have : |g x - g c| = |f x - f c| := by
+      unfold g
+      simp
+      calc
+        |-f x + f c| = |f c - f x| := by rw [add_comm]; rfl
+        _ = |f x - f c| := by rw [abs_sub_comm (f c) (f x)]
+    rw [this]
+    exact h
+  obtain ⟨xmax, hxmaxK, hxmax⟩ := evt_max hK hKne gcont
+  use xmax
+  constructor
+  . exact hxmaxK
+  . intro x hxK
+    have hneg : -f x ≤ -f xmax := hxmax x hxK
+    linarith
 
 
 -- ============================================================================
@@ -109,6 +142,15 @@ theorem seqCompact_bounded {K : Set ℝ} (hK : IsSeqCompact K) :
 -- ## Part 3: Sequentially compact ⟹ closed
 -- ============================================================================
 
+/-- If you have a predicate on the natural numberst that set is bounded and nonempty,
+then there is a maximum element.  -/
+lemma natMax [DecidablePred p]) (hNonempty : S.Nonempty) (hBounded : BddAbove S) :
+    ∃ m ∈ S, m ∈ upperBounds S:= by
+  let bound := Classical.choose hBounded
+  let hBound : bound ∈ upperBounds S := Classical.choose_spec hBounded
+  let m := Nat.findGreatest (fun n => n ∈ S) bound
+
+
 /-
 A sequentially compact set in `ℝ` is closed:
 if a sequence in `K` converges to `x`,
@@ -119,7 +161,29 @@ but that subsequence also converges to `x`, so `x = y ∈ K`.
 /-- A subsequence of a convergent sequence converges to the same limit. -/
 private lemma subseq_conv {a : ℕ → ℝ} {x : ℝ} (h : ConvergesTo a x)
     {s : ℕ → ℕ} (hs : StrictMono s) : ConvergesTo (fun n => a (s n)) x := by
-  sorry
+  intro ε εPos
+  have ⟨N, hN⟩ := h ε εPos
+  let S : Set ℕ := (s '' Set.univ)
+  -- pick first s past N, i.e. s p > N
+  obtain ⟨p,hp⟩ : ∃ p, N < s p := by
+    by_contra hBounded
+    simp at hBounded
+    have S.bounded : BddAbove S := by
+      use N
+      intro n hn
+      simp [S] at hn
+      obtain ⟨k, hk⟩ := hn
+      rw [← hk]
+      exact hBounded k
+    dsimp [StrictMono] at hs
+    obtain ⟨z,hz⟩ := S.bounded
+    let belowN : ℕ → Prop := fun n => s n ≤ N
+    let sup : ℕ := Nat.findGreatest belowN z
+    have ⟨supBelow,supGreatest⟩ : belowN sup ∧ ∀ n ≤ N, belowN  := Nat.findGreatest_spec
+      (by )
+
+
+
 
 theorem seqCompact_closed {K : Set ℝ} (hK : IsSeqCompact K) :
     IsClosedSet K := by
