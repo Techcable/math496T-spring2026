@@ -112,6 +112,52 @@ example : sSup (Set.Ioo (0 : ℝ) 1) = 1 := by
   have h01 : (0 : ℝ) < 1 := by norm_num
   rw [csSup_Ioo h01]
 
+example : sSup (Set.Ioo (0 : ℝ) 1) = 1 := by
+  let S := (Set.Ioo (0 : ℝ) 1)
+  dsimp [sSup]
+  have nonempty : S.Nonempty := by
+    use 0.5
+    simp [S]
+    constructor <;> linarith
+  have bounded : BddAbove S := by
+    use 1
+    simp [upperBounds]
+    intro x xS
+    simp [S] at xS
+    nlinarith
+  simp [nonempty,bounded,S]
+  have OneLub : IsLUB S 1 := by
+    simp [IsLUB,upperBounds,lowerBounds,IsLeast]
+    constructor
+    . simp [S]
+      intros
+      linarith
+    . intro x xGte
+      by_contra oneNotLub
+      simp at oneNotLub
+      have halfInS : 0.5 ∈ S := by
+        simp [S];
+        constructor <;> linarith
+      have xGtHalf : 0.5 ≤ x := @xGte 0.5 halfInS
+      let mid : ℝ := (x + 1) / 2
+      have mid_between : x < mid ∧ mid < 1 := by
+        simp [mid]
+        constructor <;> nlinarith
+      have midS : mid ∈ S := by
+        simp [S]
+        constructor <;> linarith
+        done
+      have := xGte midS
+      linarith
+  have existsLub : ∃ x : ℝ, IsLUB S x := by use 1
+  let x := @Classical.choose ℝ (IsLUB S) existsLub
+  have xLub : (IsLUB S) x := @Classical.choose_spec ℝ (IsLUB S) existsLub
+  show x = 1
+  by_contra xNot1
+  change x ≠ 1 at xNot1
+  sorry
+
+
 /-
 Now a predicate-defined set:
 
@@ -141,7 +187,17 @@ example (S : Set ℝ) (h : S = {x : ℝ | 0 ≤ x ∧ x ^ 2 ≤ 4}) : sSup S = 2
 -- Exercise (Part 2): An open interval has no maximum element.
 example (a b : ℝ) (h : a < b) :
     ¬ ∃ m ∈ Set.Ioo a b, ∀ x ∈ Set.Ioo a b, x ≤ m := by
-  sorry
+  push_neg
+  let I := Set.Ioo a b
+  intro m mI
+  let mid : ℝ := (m + b) / 2
+  simp [Set.Ioo] at mI
+  have midI : mid ∈ I := by
+    simp [I,mid]
+    constructor <;> nlinarith
+  use mid
+  simp [I,midI,mid]
+  nlinarith
 
 
 -- ============================================================================
@@ -184,7 +240,13 @@ example (S : Set ℝ) (hS : S.Nonempty) (hB : BddAbove S) (hSup : 0 < sSup S) :
 example (S : Set ℝ) (hS : S.Nonempty) (hB : BddAbove S) (b : ℝ)
     (hb : b < sSup S) :
     ∃ x ∈ S, b < x := by
-  sorry
+  let ε : ℝ := sSup S - b
+  have ePos : ε > 0 := by linarith
+  have ⟨x, xS,bLtX⟩ := exists_between_sup_minus_eps S hS hB ε ePos
+  use x
+  simp [xS]
+  simp [ε] at bLtX
+  exact bLtX
 
 
 -- ============================================================================

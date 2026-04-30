@@ -1,4 +1,4 @@
--- import AutograderLib
+import AutograderLib
 import Mathlib.Tactic
 
 /-! # Homework 2: Mathematical Induction
@@ -41,7 +41,28 @@ def addLeft' : myNat → myNat → myNat
 -/
 @[autogradedProof 20]
 theorem problem1 : ∀ n m : myNat, addLeft n m = addLeft' n m := by
-  sorry
+  intro n
+  induction' n with n ih
+  --- clearly addLeft(zero, m) = m = addLeft(zero, m) = m
+  . intro m
+    rfl
+  -- Assume that ∀ m, addLeft(n, m) = addLeft'(n, m)
+  -- WTS that addLeft(n+1, m)
+  -- equals addLeft'(n+1, m) = addLeft'(n, m + 1)
+  --
+  -- This took forever because I was writing "intro m" at the beginning,
+  -- meaning the IH only worked for a fixed value of n
+  . intro m
+    dsimp [addLeft']
+    /- have h0 : addLeft' n m.succ = addLeft n m.succ := by
+      rw [ih]
+      done -/
+    rw [← ih]  -- the `have` is not necessary by using ←
+    dsimp [addLeft]
+    rw [addLeft_succ]
+    done
+
+
 
 
 -- Above additions were inductive on the first argument.  Now define an addition that is inductive on the second argument:
@@ -53,7 +74,16 @@ def addRight : myNat → myNat → myNat
 -- First change the order of quantifiers to make it easier to prove:
 @[autogradedProof 10]
 theorem problem2 : (∀ n m : myNat, addLeft n m = addRight n m) ↔ (∀ m n : myNat, addLeft n m = addRight n m) := by
-  sorry
+  -- At first I didn't understand what this proof was for.
+  -- Then I started proving problem3 and now I understand.
+  -- This means you can interchange the order of the quantifiers for `m, n`
+  constructor
+  . intro a m n
+    apply a
+  . intro a m n
+    apply a
+
+
 
 -- Recall some theorems we proved in class:
 theorem zero_addLeft (n : myNat) : addLeft n zero = n := by
@@ -64,4 +94,14 @@ theorem zero_addLeft (n : myNat) : addLeft n zero = n := by
 
 @[autogradedProof 20]
 theorem problem3 : ∀ m n : myNat, addLeft n m = addRight n m := by
-  sorry
+  intro m
+  induction' m with m ih
+  . intro n
+    rw [zero_addLeft]
+    dsimp [addRight]
+  . intro n
+    -- Using these two theorems together creates addLeft(n+1,m)=addLeft(n,m)
+    -- I found this out in the hour or I spent trying to solve problem1 with the wrong quantifiers ^_^
+    rw [addLeft_succ,← succ_addLeft]
+    rw [ih]
+    dsimp [addRight]

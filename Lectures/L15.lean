@@ -152,21 +152,35 @@ example : ∃ (f : ℤ → ℤ) (S T : Set ℤ),
 
 -- (a) Show that 8 is in the image of (· + 3) applied to {5}:
 example : (8 : ℤ) ∈ (fun n : ℤ => n + 3) '' {5} := by
-  sorry
+  simp [Set.preimage]
 
 -- (b) Show that the image of {0, 1, 2} under (· * 2) is {0, 2, 4}:
 example : (fun n : ℕ => n * 2) '' {0, 1, 2} = {0, 2, 4} := by
-  sorry
+  ext x
+  simp [Set.mem_image]
+  constructor
+  . simp [eq_comm]
+  . simp [eq_comm]
+
 
 -- (c) Prove: if S ⊆ T then f '' S ⊆ f '' T (image is monotone):
 example (h : S ⊆ T) : f '' S ⊆ f '' T := by
-  sorry
+  intro a a_in_image
+  rw [Set.mem_image] at a_in_image ⊢
+  obtain ⟨x, ⟨x_in_s, fx_eq_a⟩⟩ := a_in_image
+  use x
+  constructor
+  . apply h
+    exact x_in_s
+  . exact fx_eq_a
+
 
 -- (d) Prove: S ⊆ f ⁻¹' (f '' S) ("S is contained in the preimage of its image"):
 -- This says: if x ∈ S, then f(x) ∈ f '' S.
 example : S ⊆ f ⁻¹' (f '' S) := by
-  sorry
-
+  intro x x_in_s
+  rw [Set.mem_preimage,Set.mem_image]
+  use x
 
 -- ============================================================================
 -- ## Part 2: Preimage of a Set
@@ -237,25 +251,60 @@ Thus, the two are equal if `f` is bijective.
 -- (a) Show that 4 ∈ preimage of {0, 1, 2} under (· % 3) on ℕ:
 -- (Since 4 % 3 = 1, and 1 ∈ {0, 1, 2}.)
 example : (4 : ℕ) ∈ (fun n : ℕ => n % 3) ⁻¹' {0, 1, 2} := by
-  sorry
+  simp only [Set.mem_preimage]
+  show 1 ∈ {0,1,2}
+  right
+  left
+  rfl
 
 -- (b) Prove: preimage preserves subset (monotonicity):
 -- If U ⊆ V then f ⁻¹' U ⊆ f ⁻¹' V.
 example (h : U ⊆ V) : f ⁻¹' U ⊆ f ⁻¹' V := by
-  sorry
+  simp only [Set.preimage]
+  intro a
+  dsimp
+  intro fa_in_u
+  apply h
+  exact fa_in_u
 
 -- (c) Prove: f '' (f ⁻¹' U) ⊆ U ("the image of the preimage is contained in U"):
 example : f '' (f ⁻¹' U) ⊆ U := by
-  sorry
+  simp only [Set.image,Set.preimage]
+  dsimp
+  intro a
+  rintro ⟨x, ⟨x_in_u, fx_eq_a⟩⟩
+  rw [fx_eq_a] at x_in_u
+  exact x_in_u
+
 
 -- (d) Prove: preimage of the entire codomain is everything:
+-- For any function f: A -> B, f^{-1}(B)=A
 example : f ⁻¹' (Set.univ : Set β) = Set.univ := by
-  sorry
+  ext x
+  constructor
+  . simp only [Set.mem_preimage]
+    intro fx_in_univ
+    rw [Set.univ] at ⊢ fx_in_univ
+    exact fx_in_univ
+  . simp only [Set.mem_preimage]
+    intro x_in_univ
+    rw [Set.univ] at ⊢ x_in_univ
+    exact x_in_univ
 
 -- (e) Challenge: Prove that if f is surjective, then
 -- U ⊆ f '' (f ⁻¹' U)  (so combined with (c), we get equality).
 example (hf : Function.Surjective f) : U ⊆ f '' (f ⁻¹' U) := by
-  sorry
+  intro y y_in_u
+  rw [Set.mem_image]
+  dsimp [Function.Surjective] at hf
+  obtain ⟨x, fx_eq_y⟩ := hf y
+  have x_in_preimage : x ∈ f⁻¹' U := by
+    rw [Set.mem_preimage]
+    rw [fx_eq_y]
+    exact y_in_u
+  use x
+
+
 
 
 -- ============================================================================

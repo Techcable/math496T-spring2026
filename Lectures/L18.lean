@@ -38,6 +38,23 @@ precisely in *how* he extracted witnesses from existence statements.  The
 lesson: being explicit about *when* and *how* you turn "there exists" into
 "here is one" is not pedantry — it is the difference between a correct
 proof and a flawed one.  Today's tools make this distinction precise.
+
+## Nicholas Notes
+The Axiom of choice is the difference between `Nonempty` and `Inhabited`.
+With `Inhabited` you have a pre-existing choice function,
+but with Nonempty you need to use the axiom of choice.
+The `obtain` tactic uses the axiom of choice implicitly.
+So where necessary, `obtain ⟨y, hy⟩ := h` is equivalent to
+```
+let ⟨x, y⟩ := (Classical.choice h, Classical.choice_spec h⟩
+```.
+In both cases `h` must have type `∃ y, pred y`.
+
+There are multiple ways of defining variables from least to most opaque:
+1. `local notation` - A macro that substitutes completly transparently
+2. `abbrev x := ...` - `Slightly opaque, but `simp [thm]` can see through.
+3. `def x :=  ..`- More opaque, need `dsimp [x]; simp [thm]`
+4. `have` - Entirely opaque, `dsimp` cannot see through it
 -/
 
 
@@ -108,8 +125,10 @@ variable {α β : Type*}
 
 example (g : β → α) (x : α) (hx : x ∈ Set.range g) :
     g (Classical.choose hx) = x := by
-  sorry
-
+  simp at hx
+  let y : β := Classical.choose hx
+  let hy : g (y) = x := Classical.choose_spec hx
+  rw [hy]
 end ExPart1
 
 
@@ -157,7 +176,7 @@ example (x : α) : f x ∈ myRange f := by
 
 -- With def, we need to explicitly unfold:
 example (x : α) : f x ∈ myRange' f := by
-  simp [Set.mem_range] -- this does NOT work because myRange' is opaque
+  simp [myRange',Set.mem_range] -- this does NOT work because myRange' is opaque
   -- simp [myRange', Set.mem_range]
 
 end AbbrevDemo
@@ -176,13 +195,28 @@ end NotationDemo
 
 
 -- Exercise (Part 2): Write a section with a local notation and use it.
--- (This is just for practice — uncomment and fill in.)
--- section MySection
--- variable (k : ℕ)
--- local notation "S" => k * (k + 1) / 2
--- example : 2 * S =  k * (k + 1) / 2 := by sorry
--- end MySection
-
+section MySection
+variable (k : ℕ)
+local notation "S" => k * (k + 1) / 2
+example : 2 * S = k * (k + 1) := by
+  have hs_even : Even (k * (k + 1)) := by
+    by_cases keven : Even k
+    . obtain ⟨m, k_eq_2m⟩ := keven
+      rw [← mul_two] at k_eq_2m
+      rw [mul_add]
+      dsimp [Even]
+      use 2 * m * m + m
+      simp [k_eq_2m]
+      linarith
+    . have kodd : Odd k := by
+        apply Nat.not_even_iff_odd.mp  keven
+      obtain ⟨m, k_eq_2mp1⟩ := kodd
+      -- k^2 + k = (2m+1)^2 + (2m+k) = 4m^2+4m+1^2+(2m+1)
+      rw [k_eq_2mp1]
+      use 2 * m^2 + 3 *m + 1
+      linarith
+  simp [Nat.two_mul_div_two_of_even hs_even]
+end MySection
 
 -- ============================================================================
 -- ## Part 3: Uniqueness Makes Choice Predictable

@@ -25,6 +25,29 @@ preserved under composition.
 
 For now, the key message: **injectivity, surjectivity, and bijectivity** are
 the tools that let us compare the "sizes" of sets.
+
+# Nicholas Notes
+Two functions with different domans/codomains cannot be compared by extensionality,
+because they have different types!
+This is an example of nonsensical or undesirable statements are prevented by the types.
+
+The operation Set.range transforms a function f(x)=x^2 to a function operating on the images of sets,
+so that f({1,2})={x^2,x^2}.
+
+## Injectivity/Surjectivity Facts
+Later, we get some theorems about injectivity/surjectivity which become important in Lecutre 15.
+
+Theorem `surj_of_comp_surj` states that `g ∘ f` surjective implies `g` is surjective (but says nothing about f).
+This is obvious because if there was something out of reach of g, then it would be out of reach of the combo.
+
+Theorem `inj_of_comp_inj` states that `g ∘ f` injective implies that `f` is injective (but says nothing about g).
+Injectivity basically means non-collapsing, and if f collapsed something into a single point then g cannot rexpand it.
+Does not imply anything about g, because if g could collapse points not in the range of f.
+Credit for last part: https://math.stackexchange.com/a/2067771
+
+Left Inverse is called a "retraction", which exists iff the function is invertible.
+Right Inverse is called a "section," which exists iff the function is surjective.
+See <https://en.wikipedia.org/wiki/Inverse_function#Left_and_right_inverses> for more details.
 -/
 
 
@@ -91,15 +114,20 @@ example : (fun n : ℤ => n * 1 + 0) = id := by
 
 -- (a) Prove that `f: ℕ → ℕ: n ↦ 2 * n` and `f: ℕ → ℕ: n ↦  n + n` are the same function:
 example : (fun n : ℕ => 2 * n) = (fun n : ℕ => n + n) := by
-  sorry
+  ext x
+  rw [mul_comm,mul_two]
 
 -- (b) Prove that 0 is in the range of `f:ℤ → ℤ: n ↦ 3 * n`:
 example : (0 : ℤ) ∈ Set.range (fun n : ℤ => 3 * n) := by
-  sorry
+  simp only [Set.mem_range]
+  use 0
+  linarith
 
 -- (c) Prove that 5 is NOT in the range of `f: ℕ → ℕ: n ↦ 2 * n`:
 example : (5 : ℕ) ∉ Set.range (fun n : ℕ => 2 * n) := by
-  sorry
+  simp only [Set.mem_range]
+  rintro ⟨k, hk⟩
+  omega
 
 
 -- ============================================================================
@@ -154,21 +182,30 @@ On ℤ the factorization (a - b)(a + b) = 0 allows a = -b ≠ a.
 
 -- (a) Prove that `f: ℤ → ℤ : n ↦ 5 * n - 3` is injective:
 example : Function.Injective (fun n : ℤ => 5 * n - 3) := by
-  sorry
+  dsimp [Function.Injective]
+  intro n m h
+  linarith
 
 -- (b) Prove that `f: ℕ → ℕ: n ↦ 3 * n` is injective:
 example : Function.Injective (fun n : ℕ => 3 * n) := by
-  sorry
+  dsimp [Function.Injective]
+  intro n m h
+  linarith
 
 -- (c) Show that the constant function is NOT injective (when there's more
 -- than one element). We prove it fails by finding a counterexample.
 example : ¬ Function.Injective (fun _ : ℕ => (0 : ℕ)) := by
-  sorry
+  intro finj
+  dsimp [Function.Injective] at finj
+  have : 1 = 2 := @finj 1 2 rfl
+  contradiction
 
 -- (d) Show that `f: ℤ → ℤ : n ↦ n % 3` is NOT injective:
 example : ¬ Function.Injective (fun n : ℤ => n % 3) := by
-  sorry
-
+  intro finj
+  dsimp [Function.Injective] at finj
+  have := @finj 3 6
+  contradiction
 
 -- ============================================================================
 -- ## Part 3: Surjectivity
@@ -217,22 +254,32 @@ on the domain and codomain!
 
 -- (a) Prove that `f: ℤ → ℤ : n ↦ n - 7` is surjective:
 example : Function.Surjective (fun n : ℤ => n - 7) := by
-  sorry
+  simp [Function.Surjective]
+  intro x
+  use (x + 7)
 
 -- (b) Prove that `f: ℤ → ℤ : n ↦ 3 * n + 2` is NOT surjective:
 -- (Hint: can you hit 0? What would n have to be?)
 example : ¬ Function.Surjective (fun n : ℤ => 3 * n + 2) := by
-  sorry
+  intro finj
+  dsimp only [Function.Surjective] at finj
+  have : ∃ a : ℤ, 3 * a + 2 = 0 := finj 0
+
 
 -- (c) The identity function is surjective:
 example : Function.Surjective (id : ℕ → ℕ) := by
-  sorry
+  intro x
+  use x
+  dsimp [id]
 
 -- (d) Challenge: Show that `f: ℕ → ℕ : n ↦ n / 2` is surjective.
 -- (Here / is natural number division, so 0/2 = 0, 1/2 = 0, 2/2 = 1, 3/2 = 1, ...)
 -- Hint: what witness should you use for a given b?
 example : Function.Surjective (fun n : ℕ => n / 2) := by
-  sorry
+  intro x
+  use 2 * x
+  dsimp
+  omega
 
 
 -- ============================================================================
@@ -280,16 +327,31 @@ example : Function.Injective (fun n : ℕ => n + 1) ∧
 -- (a) Prove that `f: ℤ → ℤ, n ↦ 1 - n` is bijective:
 -- (This is the "reflection" around 1/2.)
 example : Function.Bijective (fun n : ℤ => 1 - n) := by
-  sorry
+  constructor
+  . dsimp [Function.Injective]
+    intro a b
+    omega
+  . dsimp [Function.Surjective]
+    intro a
+    use 1 - a
+    simp
 
+
+-- =>
 -- (b) Prove that `f: ℤ → ℤ, n ↦  2 * n` is NOT bijective:
 example : ¬ Function.Bijective (fun n : ℤ => 2 * n) := by
-  sorry
+  rintro ⟨func_injective,func_surjective⟩
+  dsimp [Function.Surjective] at func_surjective
+  have one_is_odd : ∃ a : ℤ, 2 * a = 1 := func_surjective 1
+  omega
 
 -- (c) Prove that `f: ℤ → ℤ, n ↦ 2 * n + 1` is NOT surjective,
 -- and conclude it's not bijective:
 example : ¬ Function.Bijective (fun n : ℤ => 2 * n + 1) := by
-  sorry
+  rintro ⟨func_injective,func_surjective⟩
+  dsimp [Function.Surjective] at func_surjective
+  have zero_is_odd := func_surjective 0
+  omega
 
 
 -- ============================================================================
@@ -374,13 +436,35 @@ theorem bij_comp {f : α → β} {g : β → γ}
 
 -- (a) Prove that composing n ↦ n + 1 with n ↦ n + 1 gives n ↦ n + 2:
 example : (fun n : ℤ => n + 1) ∘ (fun n : ℤ => n + 1) = (fun n => n + 2) := by
-  sorry
+  funext x
+  dsimp
+  linarith
 
 -- (b) Use inj_comp to prove that `f: ℤ → ℤ, n ↦ 2 * n + 3` is injective,
 -- by writing it as a composition:
 -- `f = (· + 3) ∘ (2 * ·)`
 example : Function.Injective (fun n : ℤ => 2 * n + 3) := by
-  sorry
+  let f : ℤ → ℤ := fun n => 2 * n + 3
+  let h : ℤ → ℤ := fun n => n + 3
+  let g : ℤ → ℤ := fun n => n * 2
+  have fiscomp : f = h ∘ g := by
+    funext x
+    dsimp [f,h,g]
+    linarith
+  have h_inj : Function.Injective h := by
+    intro a b
+    dsimp [h]
+    intro _
+    linarith
+  have g_inj : Function.Injective g := by
+    intro a b
+    dsimp [g]
+    intro _
+    linarith
+  dsimp [f] at fiscomp
+  rw [fiscomp]
+  apply inj_comp h_inj g_inj
+
 
 -- (c) Show that if g ∘ f is injective, then f is injective.
 -- (We don't need any assumption on g!)
@@ -388,13 +472,22 @@ example : Function.Injective (fun n : ℤ => 2 * n + 3) := by
 -- find ANY g such that g ∘ f is injective.
 theorem inj_of_comp_inj {f : α → β} {g : β → γ}
     (h : Function.Injective (g ∘ f)) : Function.Injective f := by
-  sorry
+  dsimp [Function.Injective] at ⊢ h
+  intro x y fx_eq_fy
+  have gfx_eq_gfy : g (f x) = g (f y) := by
+    rw [fx_eq_fy]
+  apply h gfx_eq_gfy
+
+
 
 -- (d) Show that if g ∘ f is surjective, then g is surjective.
 -- (We don't need any assumption on f!)
 theorem surj_of_comp_surj {f : α → β} {g : β → γ}
     (h : Function.Surjective (g ∘ f)) : Function.Surjective g := by
-  sorry
+  dsimp [Function.Surjective] at ⊢ h
+  intro b
+  obtain ⟨a, gfa_eq_b⟩ := h b
+  use f a
 
 
 -- ============================================================================

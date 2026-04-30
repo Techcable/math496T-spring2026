@@ -68,49 +68,149 @@ Elimination                `apply` or               `obtain ⟨a,ha⟩ := h`
 -- We are to introduce ℕ in the next lecture.
 
 
-example : ∀ n : ℕ, 0 ≤ n*n := sorry
+example : ∀ n : ℕ, 0 ≤ n*n := by
+  -- done by professor
+  intro k
+  norm_num
 
 -- here use linarith tactic at the very end to do simple arithmetic inequalities
-example (f : ℝ → ℝ) (h : ∃ ε >0, ∀ x < ε , f x < 1) : ∃ ε , ∀ x < ε , f (2*x) < 1 := sorry
+example (f : ℝ → ℝ) (h : ∃ ε >0, ∀ x < ε , f x < 1) : ∃ ε , ∀ x < ε , f (2*x) < 1 := by
+  -- walked through together in class
+  obtain ⟨δ, δpos, h1⟩ := h
+  use δ/2
+  intro x
+  intro xsmall
+  apply h1
+  linarith
+
 
 
 -- Let us define even and odd numbers
+
+-- this is a predicate, takes a number and produces a proposition
+-- proposition is a logical statement which is either true or false
 def isEven (n : ℕ) := ∃ m, n = 2 * m
 def isOdd (n : ℕ) := ∃ m, n = 2 * m + 1
 
-example : ∀ n : ℕ, isEven (2*n) := sorry
-example : ∀ n : ℕ, isOdd (2 * n + 1) := sorry
-example : ∀ n : ℕ, isOdd (2 * n + 3) := sorry
+-- Dr. Cherkis' alternate definition of `isEven`
+def isEven' (n : ℕ) := ∃ m, n = m + m
 
-example : ∀ n : ℕ, isEven n → isOdd (n+1) := sorry
+example : ∀ n : ℕ, isEven (2*n) := by
+  intro n
+  dsimp [isEven]
+  use n
+example : ∀ n : ℕ, isOdd (2 * n + 1) := by
+  intro n
+  dsimp [isOdd]
+  use n
 
-example : ∀ n : ℕ, isOdd n → isEven (n+1) := sorry
+example : ∀ n : ℕ, isOdd (2 * n + 3) := by
+  intro n
+  dsimp [isOdd]
+  use (n+1)
+  rfl
+
+example : ∀ n : ℕ, isEven n → isOdd (n+1) := by
+  intro n
+  intro neven
+  dsimp [isEven] at neven
+  dsimp [isOdd]
+  obtain ⟨m0, hm⟩ := neven
+  use m0
+  rw [hm]
+
+example : ∀ n : ℕ, isOdd n → isEven (n+1) := by
+  intro n
+  intro nodd
+  dsimp [isOdd] at nodd
+  dsimp [isEven]
+  obtain ⟨m0, hm0⟩ := nodd
+  use (m0 + 1)
+  rw [hm0]
+  rfl
 
 
-example : ¬ ∀ n : ℕ, isOdd n := sorry
+example : ¬ ∀ n : ℕ, isOdd n := by
+  intro hn
+  -- how Dr. Cherkis says "we need more theorems"
+  -- and a better understanding of the natural numbers
+  -- in order to do this for n=2
+  have ⟨m0, hm⟩ := hn 0
+  -- Without a better understanding of natural numbers,
+  -- this appears to be the best we can do
+  linarith
 
 -- NOTE:proving  `¬ ∀ n : ℕ, isEven n` requires more tools.  To be revisited later.
 
 
 -- might need `linarith` tactic here
-example : ∀ x : ℝ, ∃ y : ℝ, x * y = x := sorry
-example: ∃ y : ℝ, ∀ x : ℝ, x*y = x := sorry
+example : ∀ x : ℝ, ∃ y : ℝ, x * y = x := by
+  intro x
+  use 1
+  linarith
 
-theorem predExists : ∀ x : ℝ, ∃ y : ℝ, x = y + 1 := sorry
+example: ∃ y : ℝ, ∀ x : ℝ, x*y = x := by
+  use 1
+  intro x
+  linarith
+
+theorem predExists : ∀ x : ℝ, ∃ y : ℝ, x = y + 1 := by
+  intro x
+  use x-1
+  linarith
+
+
 -- exchange the order of the two quantifiers in the last theorem,
 -- then prove or disprove the resulting statement
 -- you might need to use `linarith` again
 
+example: ¬ ∃ y : ℝ, ∀ x : ℝ, x = y + 1 := by
+  rintro ⟨y0, notq⟩
+  have notq_self := notq y0
+  linarith
+
+
+
 -- Now let's prove that `theorem predExists` does NOT hold for ℕ
 -- amazingly `linarith` again comes to a rescue.
-example : ¬ ∀ x : ℕ, ∃ y : ℕ, x = y + 1 := sorry
+example : ¬ ∀ x : ℕ, ∃ y : ℕ, x = y + 1 := by
+  intro badh
+  have ⟨y0, badh_specific⟩ := badh 0
+  linarith
 
 -- try again, proving a statement over ℝ and its negation over ℕ :
-example : ∀ x : ℝ, ∃ y, x = y + 5 := sorry
+example : ∀ x : ℝ, ∃ y, x = y + 5 := by
+  intro x
+  use x-5
+  linarith
 
-example : ¬ ∀ x : ℕ, ∃ y, x = y+5 := sorry
+example : ¬ ∀ x : ℕ, ∃ y, x = y+5 := by
+  push_neg
+  use 0
+  intro y
+  linarith
+
 
 -- State and then prove or disprove the following statements:
 -- `"All integers are not odd"` and `"Not all integers are odd"`
+
+def isOddInt (n : ℤ) := ∃ m, n = 2 * m + 1
+
+
+-- "All integers are not odd" - `∀ x : ℤ, ¬ isOdd x` is false
+example : ¬(∀ x : ℤ, ¬ isOddInt x) := by
+  intro h
+  apply h 1
+  dsimp [isOddInt]
+  use 0
+  linarith
+
+-- "not all integers are odd" is true, but I could only prove this for ℕ
+example : ¬(∀ x : ℕ, isOdd x) := by
+  intro falseh
+  have zeroIsOdd : isOdd 0 := falseh 0
+  dsimp [isOdd] at zeroIsOdd
+  obtain ⟨m, meq⟩ := zeroIsOdd
+  linarith
 
 -- Again, completing the `even` analogue of this exercise requires more tools.

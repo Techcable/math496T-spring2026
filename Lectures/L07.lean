@@ -42,8 +42,7 @@ theorem myNat.induction {P : myNat → Prop} (h0 : P zero) (hS : ∀ n, P n → 
   . exact hS n ih
 
 theorem myNat.succ_ne_zero (n : myNat) : myNat.zero ≠ (myNat.succ n) := by
-sorry
-
+  apply myNat.zero_ne_succ
 
 theorem myNat.zero_ne_one : myNat.zero ≠ myNat.succ myNat.zero := by
   apply myNat.zero_ne_succ
@@ -54,7 +53,9 @@ def myAdd : myNat → myNat → myNat
   | succ n, m => succ (myAdd n m)
 
 theorem myAdd_zero (n : myNat) : myAdd zero n = n := by
-  sorry
+  cases n
+  . rfl
+  . dsimp [myAdd]
 
 theorem zero_myAdd (n : myNat) : myAdd n zero = n := by
   induction' n with n ih
@@ -63,10 +64,21 @@ theorem zero_myAdd (n : myNat) : myAdd n zero = n := by
     rw [ih]
 
 theorem succ_myAdd (n m : myNat) : myAdd (succ n) m = succ (myAdd n m) := by
-sorry
+  dsimp [myAdd]
+
+
+-- needed for myAdd_comm
+theorem myAdd_succ (n m : myNat) : myAdd n (succ m) = succ (myAdd n m) := by
+  induction' n with n ih
+  . rw [myAdd_zero,myAdd_zero]
+  . rw [succ_myAdd,ih,succ_myAdd]
+
 
 theorem myAdd_comm (n m : myNat) : myAdd n m = myAdd m n := by
-  sorry
+  induction' n with n ih
+  . rw [myAdd_zero,zero_myAdd]
+  . rw [succ_myAdd,myAdd_succ,ih]
+
 
 theorem myAdd_assoc (n m k : myNat) : myAdd n (myAdd m k) = myAdd (myAdd n m) k := by
   induction' n with p ih
@@ -77,26 +89,59 @@ theorem myAdd_assoc (n m k : myNat) : myAdd n (myAdd m k) = myAdd (myAdd n m) k 
 -- ## Multiplication
 
 def myMul : myNat → myNat → myNat
-  | zero, m => zero
+  | zero, _m => zero
   | succ n, m => myAdd m (myMul n m)
 
 theorem myMul_zero (n : myNat) : myMul zero n = zero := by
   rfl
 
 theorem zero_myMul (n : myNat) : myMul n zero = zero := by
-  sorry
+  induction' n with n ih
+  . rfl
+  . dsimp [myMul]
+    rw [ih]
+    rfl
 
 theorem succ_myMul (n m : myNat) : myMul (succ n) m = myAdd m (myMul n m) := by
-  sorry
+  rfl
+
+-- needed for mMul_comm
+theorem myMul_succ (n m : myNat) : myMul n (succ m) = myAdd n (myMul n m) := by
+  induction' n with n ih
+  . rfl
+  . rw [succ_myMul n m.succ]
+    rw [ih]
+    rw [succ_myMul]
+    dsimp [myAdd]
+    rw [myAdd_assoc,myAdd_assoc,myAdd_comm n m]
+
 
 theorem myMul_comm (n m : myNat) : myMul n m = myMul m n := by
-  sorry
+  induction' n with n ih
+  . rw [zero_myMul,myMul_zero]
+  . rw [myMul_succ,succ_myMul,ih]
 
+
+-- distributive property
 theorem myNat.mul_add (n m k : myNat) : myMul n (myAdd m k) = myAdd (myMul n m) (myMul n k) := by
-  sorry
+  induction' k with k ih
+  . rw [zero_myAdd,zero_myMul,zero_myAdd]
+  . rw [myMul_succ]
+    -- now we WTS n(m+(k+1))=(nm+n+nk),
+    -- need to rewrite LHS into ((nm+nk)+n) to invoke the IH
+    rw [myAdd_comm n,myAdd_assoc]
+    rw [← ih]
+    -- now we WTS that n(m+(k+1))=(n(m+k))+n
+    -- This can be done by rewriting the LHS as n((m+k)) + 1),
+    -- reducing to the already proved myMull_succ
+    rw [myAdd_succ]
+    rw [myMul_succ,myAdd_comm]
 
 theorem myNat.add_mul (n m k : myNat) : myMul (myAdd n m) k = myAdd (myMul n k) (myMul m k) := by
-  sorry
+  -- follows from mul_add and commutativity
+  rw [myMul_comm,myNat.mul_add,myMul_comm k n,myMul_comm k m]
 
 theorem myMul_assoc (n m k : myNat) : myMul n (myMul m k) = myMul (myMul n m) k := by
-  sorry
+  induction' n with n ih
+  . rfl
+  . rw [succ_myMul,succ_myMul,ih,add_mul]

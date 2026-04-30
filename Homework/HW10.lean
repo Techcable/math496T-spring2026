@@ -1,4 +1,4 @@
--- import AutograderLib
+import AutograderLib
 import Mathlib.Tactic
 import Mathlib.Data.Real.Basic
 import Mathlib.Data.Real.Archimedean
@@ -34,8 +34,25 @@ Prove that `1 / (2n + 1)` converges to `0`.
 
 @[autogradedProof 6]
 theorem problem1 : ConvergesTo (fun n => 1 / ((2 : ℝ) * n + 1)) 0 := by
-  sorry
-  done
+  intro ε εPos
+  have ⟨N,hN⟩ := exists_nat_one_div_lt εPos
+  use N
+  intro n nBound
+  simp [-one_div]
+  calc
+      |1 / (2 * (n : ℝ) + 1)|
+    _ = 1 / (2 * n + 1) := by exact abs_of_nonneg (by positivity)
+    _ ≤ 1 / (n + 1) := by (
+      apply one_div_le_one_div_of_le
+      . positivity
+      . linarith
+    )
+    _ ≤ 1 / (N + 1) := by (
+      apply one_div_le_one_div_of_le
+      . positivity
+      . simp_all
+    )
+    _ < ε := hN
 
 
 -- ============================================================================
@@ -50,8 +67,17 @@ at most `c`.
 @[autogradedProof 8]
 theorem problem2 (a : ℕ → ℝ) (L c : ℝ)
     (ha : ConvergesTo a L) (hc : ∀ n, a n ≤ c) : L ≤ c := by
-  sorry
-  done
+  by_contra! limitLarger
+  let ε := L - c
+  have εPos : ε > 0 := by linarith
+  have ⟨N,hAfterN⟩ := ha ε εPos
+  have dist_aN := hAfterN N (by simp)
+  rw [abs_sub_comm] at dist_aN
+  have cbound_aN := hc N
+  have aboveL : L < a N := by
+    rw [abs_of_nonneg (by linarith)] at dist_aN
+    linarith
+  linarith
 
 
 -- ============================================================================
@@ -67,8 +93,33 @@ Show that `(-1)^n` does not converge.
 
 @[autogradedProof 10]
 theorem problem3 : ¬ ∃ L : ℝ, ConvergesTo (fun n => (-1 : ℝ) ^ n) L := by
-  sorry
-  done
+  rintro ⟨L,hConverge⟩
+  by_cases hOne : L = 1
+  . have ⟨N,hN⟩ := hConverge 1 (by simp)
+    let n := N * 2 + 1
+    have n.odd : Odd n := by simp [n]
+    have an_close_neg1 := hN n (by dsimp [n]; linarith)
+    simp_all
+    rw [abs_of_neg (by linarith)] at an_close_neg1
+    linarith
+  . change L ≠ 1 at hOne
+    let ε : ℝ := |L - 1| / 2
+    have εPos : ε > 0 := by simp [ε,abs_sub_pos.mpr hOne]
+    have ⟨N,hN⟩ := hConverge ε εPos
+    let n := N * 2
+    have n.odd : Even n := by simp [n]
+    have Lclose1 := hN n (by dsimp [n]; linarith)
+    simp_all [ε]
+    by_cases Lgt1 : L > 1
+    . simp_all
+      rw [abs_sub_comm,abs_of_pos (by linarith)] at Lclose1
+      linarith
+    . have Llt1 : L < 1 := by
+        rw [lt_iff_le_and_ne]
+        simp_all
+      rw [abs_sub_comm L 1] at Lclose1
+      rw [abs_of_pos (by linarith)] at Lclose1
+      linarith
 
 
 -- ============================================================================
@@ -109,6 +160,23 @@ theorem mul_const_converges (a : ℕ → ℝ) (L c : ℝ)
 -- Problem 4 (10 points): An algebraic limit
 -- ============================================================================
 
+/-- Prove that a ≤ b → a ≤ b² n for all naturals.
+
+I could not find a theorem that handled the n = 0 case in mathlib.
+In fact, I couldn't even find the statement `n ≤ n²` for all naturals.
+The `le_mul_of_one_le_left` theorem is close but needlessly requires `n ≥ 1`.
+
+I should ask on zulip about this. -/
+lemma nat_le_squared {a b : ℕ} (h : a ≤ b) : a ≤ b^2  := by
+  by_cases bzero : b = 0
+  . nlinarith
+  . change b ≠ 0 at bzero
+    have npos : b > 0 := by positivity
+    calc
+      a ≤ b := h
+      _ ≤ b * b := le_mul_of_one_le_left (by linarith) (by linarith)
+      _ = b ^ 2 := by linarith
+
 /-
 Prove that `n² / (n² + 1) → 1`.
 -/
@@ -116,8 +184,52 @@ Prove that `n² / (n² + 1) → 1`.
 @[autogradedProof 10]
 theorem problem4 :
     ConvergesTo (fun n => ((n : ℝ) ^ 2) / (((n : ℝ) ^ 2) + 1)) 1 := by
-  sorry
-  done
+  -- Observe that (n² / (n² + 1)) - 1 = -1/(n² + 1)
+  -- This clearly converges to 0 = 1-1
+  let a := fun n : ℕ => ((n : ℝ) ^ 2) / (((n : ℝ) ^ 2) + 1)
+  let b := fun n : ℕ => (-1 : ℝ) / ((n : ℝ)^2 + 1)
+  have b.negative : ∀ n : ℕ, b n < 0 := by
+    intro n
+    dsimp [b]
+    exact div_neg_of_neg_of_pos (by simp) (by positivity)
+  have haeq : a = b + 1 := by
+    funext k
+    dsimp [a,b]
+    let k2 : ℝ := k ^2
+    suffices k2 / (k2 + 1) - 1 = -1 / (k2 + 1) by linarith
+    calc
+          k2 / (k2 + 1) - 1
+      _ = (k2 - (k2 + 1) * 1) / (k2 + 1) := by rw [div_sub']; positivity
+      _ = (k2 - k2 - 1) / (k2 + 1) := by simp
+      _ = -1 / (k2 + 1) := by simp
+  have b.converges : ConvergesTo b 0 := by
+    intro ε εPos
+    have ⟨n,mBound⟩ := exists_nat_one_div_lt εPos
+    use n
+    intro m mGtN
+    let m2 := m ^ 2
+    have m2.aboveN : m2 ≥ n := by
+      simp [m2,nat_le_squared mGtN]
+    simp
+    rw [abs_of_neg (b.negative m)]
+    simp [b]
+    let denom := (m : ℝ) ^ 2 + 1
+    calc
+          -(-1 / denom)
+      _ = -(-(1 / denom)) := by rw [neg_div denom 1]
+      _ = 1 / denom := by simp
+      _ ≤ 1 / (↑n + 1) := by
+        apply one_div_le_one_div_of_le (by positivity)
+        dsimp [denom]
+        suffices ↑n ≤ ↑m ^ 2 by norm_cast; simp_all
+        exact m2.aboveN
+      _ < ε := by linarith
+  have add_converges := add_const_converges b 0 1 b.converges
+  let a' := b + 1
+  simp_all
+  change ConvergesTo a' 1 at add_converges
+  show ConvergesTo a 1
+  simp_all [a',a,b]
 
 
 -- ============================================================================
@@ -187,5 +299,92 @@ to `1`.  The bound `hw_seq n ≤ 1` is provided above.
 
 @[autogradedProof 16]
 theorem problem5 : ConvergesTo hw_seq 1 := by
-  sorry
-  done
+  let base : ℝ := 1/5
+  -- hw_seq: 0, 4/5, 24/25, 124/125, ..
+  -- so the closed form is the following:
+  let hw_seq' : ℕ → ℝ := fun n => 1 - base^(n : ℝ)
+  have equiv_forms : hw_seq' = hw_seq := by
+    ext n
+    induction' n with n ih
+    . simp [hw_seq,hw_seq']
+    . simp [hw_seq]
+      rw [← ih]
+      dsimp [hw_seq']
+      symm
+      suffices (1 - base^(n : ℝ) + 4) / 5 = 1 - base ^ (n + 1 : ℝ) by exact_mod_cast this;
+      calc
+            (1 - base^(n : ℝ) + 4) / 5
+        _ = ((1 - base^(n : ℝ)) + 4) / 5 := by rfl
+        _ = (1 - base^(n : ℝ)) / 5 + 4 / 5 := by rw [← div_add_div_same]
+        _ = (1 / 5) - (base^(n : ℝ)) / 5 + 4 / 5 := by linarith
+        _ = (1 / 5) - (base^(n : ℝ)) * base + 4 / 5 := by dsimp [base]; linarith
+        _ = 1 - (base^(n : ℝ)) * base ^ (1 : ℝ) := by linarith
+        _ = 1 - (base^(n + 1 : ℝ)) := by rw [← Real.rpow_add]; simp [base]
+        _ = 1 - base ^ (n + 1 : ℝ) := by norm_cast
+  -- now to prove the main result
+  let S : Set ℝ := Set.range hw_seq
+  have one_upper_bound : 1 ∈ upperBounds S := by
+    intro x ⟨k, hk⟩
+    rw [← hk]
+    exact hw_seq_le_one k
+  have hw_seq.bdd : BddAbove (Set.range hw_seq) := by use 1
+  have hw_seq.nonempty : S.Nonempty := by
+    simp [Set.Nonempty,S]
+    use (hw_seq 0)
+    use 0
+  let sup : ℝ := sSup S
+  have sup.pos : 0 < sup := by
+    let y : ℝ := 4 / 5
+    have y.memS : y ∈ S := by use 1; simp [y,hw_seq]
+    calc
+      0 < y := by simp [y]
+      _ ≤ sup := le_csSup hw_seq.bdd y.memS
+  have hw_seq.monotone : Monotone hw_seq := by
+    apply monotone_nat_of_le_succ
+    intro n
+    dsimp [hw_seq]
+    let x := hw_seq n
+    show x ≤ (x + 4) / 5
+    suffices (5 * x) ≤ (x + 4) by nlinarith
+    have x.lt1 : x ≤ 1 := hw_seq_le_one n
+    calc
+      5 * x ≤ x + 4 * x := by linarith
+          _ ≤ x + 4 := by linarith
+  have hw_seq.conv : ConvergesTo hw_seq sup := by
+    exact monotone_convergence hw_seq hw_seq.monotone hw_seq.bdd
+  suffices 1 = sup by simp_all
+  apply le_antisymm
+  . dsimp [sup]
+    apply (Real.le_sSup_iff hw_seq.bdd hw_seq.nonempty).mpr
+    intro ε' ε'Pos
+    let ε : ℝ := -ε'
+    have εPos : ε > 0 := by linarith
+
+    suffices ∃ x ∈ Set.range hw_seq, 1 < x + ε by
+      have revEquality : ∀ x, (1 + ε' < x) = (1 < x + ε) := by intros; simp [ε]
+      simp_all [revEquality]
+    have ⟨n,hn⟩ := exists_nat_one_div_lt (by positivity : ε > 0)
+    have ⟨pow,hpow⟩ := pow_unbounded_of_one_lt (n + 1) (by simp : 1 < 5)
+    let x := hw_seq pow
+    use x
+    constructor
+    . simp [x]
+    . have hinv_pow :  1/(5^pow : ℝ) < 1/(n +1 : ℝ) := by
+        have fivepow_pos : 0 < (5^pow : ℝ) := by positivity
+        have n1_pos : 0 < (n + 1 : ℝ) := by positivity
+        apply (one_div_lt_one_div fivepow_pos n1_pos).mpr
+        exact_mod_cast hpow
+      dsimp [x]
+      rw [← equiv_forms]
+      simp [hw_seq']
+      suffices base ^ pow < ε by linarith
+      calc
+            base ^ pow
+        _ = 1 / (5 ^ pow : ℝ) := by simp [base]
+        _ < 1 / (n + 1 : ℝ) := hinv_pow
+        _ < ε := hn
+  . simp [sup]
+    apply Real.sSup_le ?_ (by simp)
+    rintro x ⟨k,hk⟩
+    rw [← hk]
+    exact hw_seq_le_one k

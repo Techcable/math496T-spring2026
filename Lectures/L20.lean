@@ -63,7 +63,7 @@ example (n m : ℕ) (h : (↑n : ℤ) = ↑m) : n = m := by
 
 -- Prove that the coercion `ℕ → ℤ` preserves strict order.
 example (n m : ℕ) (h : n < m) : (↑n : ℤ) < ↑m := by
-  sorry
+  exact_mod_cast h
 
 
 -- ============================================================================
@@ -116,7 +116,8 @@ So `ℚ` has "holes."  The real numbers `ℝ` are what we get by filling those h
 
 -- A concrete rational inequality.
 example : (1 : ℚ) / 3 + 1 / 4 < 2 / 3 := by
-  sorry
+  norm_num
+
 
 
 -- ============================================================================
@@ -190,19 +191,52 @@ example (n m : ℕ) (h : (↑n : ℝ) = ↑m) : n = m := by exact_mod_cast h
 -- Supremum EXERCISES:
 -- Exercise (Part 3): Prove that the coercion `ℤ → ℝ` is injective.
 example (a b : ℤ) (h : (↑a : ℝ) = ↑b) : a = b := by
-  sorry
+  exact_mod_cast h
 
 -- Practice with Supremum:
 -- Uniqueness of the least upper bound
-  example (s : Set ℝ) (a b : ℝ) (ha : IsLUB s a) (hb : IsLUB s b) : a = b := by
-    sorry
+  theorem lubUnique (s : Set ℝ) (a b : ℝ) (ha : IsLUB s a) (hb : IsLUB s b) : a = b := by
+    let ubounds := upperBounds s
+    dsimp [IsLUB,IsLeast] at ha hb
+    obtain ⟨aUp, aLowerUpper⟩ := ha
+    obtain ⟨bUp, bLowerUpper⟩ := hb
+    dsimp [lowerBounds] at aLowerUpper bLowerUpper
+    have aLeB : a ≤ b := by
+      exact aLowerUpper bUp
+    have bLeA : b ≤ a := by
+      exact bLowerUpper aUp
+    apply le_antisymm aLeB bLeA
+
+
+
   -- Hint: `IsLUB` means `IsLeast (upperBounds s)`, so `ha.1` gives the
   -- upper-bound part and `ha.2` gives the least part. Use `le_antisymm`.
 
  -- A maximum element equals the supremum
   example (s : Set ℝ) (a : ℝ) (hs : s.Nonempty) (hbdd : BddAbove s)
       (hmem : a ∈ s) (hub : ∀ x ∈ s, x ≤ a) : sSup s = a := by
-    sorry
+      simp [sSup,hs,hbdd]
+      have lubA : IsLUB s a := by
+        simp [IsLUB,IsLeast]
+        dsimp [upperBounds]
+        constructor
+        . intro x
+          exact hub x
+        . dsimp [lowerBounds]
+          intro x xUpper
+          exact @xUpper a hmem
+      have lubUnique : ∃! x, IsLUB s x := by
+        use a
+        constructor
+        . exact lubA
+        . intro y lubY
+          exact lubUnique s y a lubY lubA
+      let choice : ℝ := @Classical.choose ℝ (IsLUB s) lubUnique.exists
+      show choice = a
+      have choice_prop : IsLUB s choice := Classical.choose_spec lubUnique.exists
+      exact lubUnique.unique choice_prop lubA
+
+
   -- Hint: `le_antisymm` with `csSup_le` and `le_csSup`.
 
   -- Monotonicity of supremum
