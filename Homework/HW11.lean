@@ -176,6 +176,71 @@ or (longer) prove it directly via separations and connectedness of `[0, 1]` (L27
 #check IVT -- (f : ℝ → ℝ) → ((a : ℝ) < b) → (∀ c ∈ Set.Icc a b, ContAt f c) → f a < 0 → 0 < f b → ∃ c ∈ Set.Ioo a b, f c = 0
 #check sub_eq_zero -- a - b = 0 ↔ a = b
 
+
+lemma ContAtSum
+  (f g : ℝ → ℝ) (x : ℝ)
+  (fcont : ContAt f x) (gcont : ContAt g x) : (ContAt (f + g) x) := by
+  intro ε εPos
+  let ⟨δ1,δ1Pos,hδ1⟩ := fcont (ε / 2) (by positivity)
+  let ⟨δ2,δ2Pos,hδ2⟩ := gcont (ε / 2) (by positivity)
+  let δ := min δ1 δ2
+  use δ
+  have hδ1' : δ ≤ δ1 := by dsimp [δ]; apply min_le_left
+  have hδ2' : δ ≤ δ2 := by dsimp [δ]; apply min_le_right
+  constructor
+  . positivity
+  . intro y yDist
+    have fDistSmall : |f y - f x| < ε / 2 := by
+      apply hδ1 y
+      linarith
+    have gDistSmall : |g y - g x| < ε / 2 := by
+      apply hδ2 y
+      linarith
+    calc
+          |(f + g) y - (f + g) x|
+      _ = |(f y + g y) - (f x + g x)| := by dsimp
+      _ = |(f y - f x) + (g y - g x)| := by
+          have (a b c d : ℝ) : (a + b) - (c + d) = (a - c) + (b - d) := by linarith
+          rw [this]
+      _ ≤ |f y - f x| + |g y - g x| := by apply abs_add_le
+      _ < ε/2 + ε/2 := by linarith
+      _ = ε := by simp
+
+/-
+lemma ContAtMulConst
+  (f : ℝ → ℝ) (x c : ℝ)
+  (fcont : ContAt f x) : (ContAt (c • f) x) := by
+  intro ε εPos
+  let M := |c| + 1
+  -- have Mpos : M > 0 := by positivity
+  let ⟨δf,δfPos,hδf⟩ := fcont (ε / M) (by positivity)
+  let δ := δf / M
+  have hδ' : δf < δ := by
+    simp [δ];
+    have δf.nonneg : δf ≥ 0 := by positivity
+    have M.gt1 : M ≥ 1 := by simp [M]
+    nlinarith
+  use δ
+  constructor
+  . positivity
+  . intro y yDist
+    have fSmall : |f y - f x| < ε / M := by
+      apply hδf y
+      rw [abs_sub_comm]
+      nlinarith
+    calc
+          |(c • f) y - (c • f) x|
+      _ = |c * (f y) - c * (f x)| := by dsimp
+      _ = |c * (f y - f x)| := by rw [mul_sub]
+      _ = |c| * |f y - f x| := by apply abs_mul
+      _ ≤ M * |f y - f x| := by
+        dsimp [M]
+        have : |f y - f x| ≥ 0 := by positivity
+        linarith
+      _ = M
+-/
+
+
 @[autogradedProof 13]
 theorem problem5 (f : ℝ → ℝ)
     (hcont : ∀ c ∈ Set.Icc (0 : ℝ) 1, ContAt f c)
