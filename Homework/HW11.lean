@@ -178,7 +178,7 @@ or (longer) prove it directly via separations and connectedness of `[0, 1]` (L27
 
 
 lemma ContAtSum
-  (f g : ℝ → ℝ) (x : ℝ)
+  {f g : ℝ → ℝ} {x : ℝ}
   (fcont : ContAt f x) (gcont : ContAt g x) : (ContAt (f + g) x) := by
   intro ε εPos
   let ⟨δ1,δ1Pos,hδ1⟩ := fcont (ε / 2) (by positivity)
@@ -206,28 +206,18 @@ lemma ContAtSum
       _ < ε/2 + ε/2 := by linarith
       _ = ε := by simp
 
-/-
 lemma ContAtMulConst
-  (f : ℝ → ℝ) (x c : ℝ)
+  {f : ℝ → ℝ} {x c : ℝ}
   (fcont : ContAt f x) : (ContAt (c • f) x) := by
   intro ε εPos
   let M := |c| + 1
   -- have Mpos : M > 0 := by positivity
   let ⟨δf,δfPos,hδf⟩ := fcont (ε / M) (by positivity)
-  let δ := δf / M
-  have hδ' : δf < δ := by
-    simp [δ];
-    have δf.nonneg : δf ≥ 0 := by positivity
-    have M.gt1 : M ≥ 1 := by simp [M]
-    nlinarith
-  use δ
+  use δf
   constructor
   . positivity
   . intro y yDist
-    have fSmall : |f y - f x| < ε / M := by
-      apply hδf y
-      rw [abs_sub_comm]
-      nlinarith
+    have fSmall : |f y - f x| < ε / M := hδf y yDist
     calc
           |(c • f) y - (c • f) x|
       _ = |c * (f y) - c * (f x)| := by dsimp
@@ -237,9 +227,20 @@ lemma ContAtMulConst
         dsimp [M]
         have : |f y - f x| ≥ 0 := by positivity
         linarith
-      _ = M
--/
+      _ < M * (ε / M) := (mul_lt_mul_left (by positivity)).mpr fSmall
+      _ = ε := mul_div_cancel₀ ε (by positivity)
 
+lemma ContAtNeg
+  {f : ℝ → ℝ} {x : ℝ}
+  (fcont : ContAt f x) : ContAt (-f) x := by
+  have fequiv : -f = (-1 : ℝ) • f := by ext; simp
+  rw [fequiv]
+  exact ContAtMulConst fcont
+
+lemma ContId (x : ℝ) : ContAt id x := by
+  intro ε εPos
+  use ε
+  simp_all
 
 @[autogradedProof 13]
 theorem problem5 (f : ℝ → ℝ)
@@ -249,48 +250,22 @@ theorem problem5 (f : ℝ → ℝ)
   let S := Set.Icc (0 : ℝ) 1
   let g : ℝ → ℝ := fun x => x - f x
   have gcont : ∀ x ∈ S, ContAt g x := by
+    let g' : ℝ → ℝ := -f + id
+    have gequiv : g' = g := by
+      ext x
+      dsimp [g',g]
+      linarith
+    rw [← gequiv]
     intro x xS
-    dsimp [ContAt]
-    intro ε εPos
-    have ⟨δ,δPos,hδ⟩ := hcont x (by simp_all [Set.Icc,S]) (ε/2) (by positivity)
-    let δ' := min δ (ε / 2)
-    use δ'
-    constructor
-    . positivity
-    . intro y yBound
-      have distSmall : |x - y| < ε / 2 := by
-        have : δ' ≤ ε / 2 := by apply min_le_right
-        rw [abs_sub_comm]
-        linarith
-      have yBound' : |y - x| < δ := by
-        calc
-            |y - x|
-          _ < δ' := by assumption
-          _ ≤ δ := by apply min_le_left
-      have fDistSmall : |f y - f x| < ε / 2 := hδ y yBound'
-      -- i originally proved this for -g, so proved |(-g) y - (-g) x| < ε
-      -- Due to linarith playing poorly with abs, I had to do everything by hand
-      -- As a result, it is easier to rearrange the norm and then reuse my proof for -g
-      calc
-            |g y - g x|
-        _ = |-(g y - g x)| := by rw [abs_neg]
-        _ = |-(g y) - -(g x)| := by rw [neg_sub']
-        _ = |-(y - f y) - -(x - f x)| := by dsimp [g]
-        -- now this is my original proof
-        _ = |(f y - y) - (f x - x)| := by rw [neg_sub,neg_sub]
-        _ = |f y - y - f x + x| := by rw [sub_add]
-        _ = |f y - f x - y + x| := by simp [sub_right_comm]
-        _ = |(f y - f x) + (x - y)| := by rw [add_comm_sub]
-        _ ≤ |f y - f x| + |x - y| := by apply abs_add_le
-        _ < |f y - f x| + (ε / 2) := by linarith
-        _ < ε := by linarith
+    have fcont : ContAt f x := hcont x xS
+    have negf_cont : ContAt (-f) x := ContAtNeg fcont
+    have idcont : ContAt id x := ContId x
+    exact ContAtSum negf_cont idcont
   have g.upper : g 1 > 0 := by simp [g]; assumption
   have g.lower : g 0 < 0 := by simp [g]; assumption
   obtain ⟨c,hMem,cfixpoint⟩ := @IVT g 0 1 (by linarith) gcont g.lower g.upper
   use c
-  constructor
-  . assumption
-  . linarith
+  simp_all
 
 #check abs_add
 
