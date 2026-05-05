@@ -101,10 +101,12 @@ theorem isOpenSet_iff_isOpen (U : Set ℝ) : IsOpenSet U ↔ IsOpen U := by
   rw [Metric.isOpen_iff]; unfold IsOpenSet
   simp [Metric.ball, Real.dist_eq, abs_sub_comm, Set.subset_def]
 
+
 /-- Mini-exercise 1.  Course-style closed agrees with Mathlib's. -/
--- search: #leansearch "complement of open is closed."
 example (F : Set ℝ) : IsClosedSet F ↔ IsClosed F := by
-  sorry
+  simp [IsClosedSet,isOpenSet_iff_isOpen,isOpen_compl_iff]
+
+
 
 /-! ### Bridge 2: compactness as closed and bounded (Mathlib Heine–Borel) -/
 
@@ -115,8 +117,26 @@ example (K : Set ℝ) : IsCompact K ↔ IsClosed K ∧ IsBounded K :=
 
 /-- Mini-exercise 2.  `[a, b]` is compact, directly from Heine–Borel. -/
 -- search: #loogle IsCompact (Set.Icc _ _)
-example (a b : ℝ) : IsCompact (Set.Icc a b) := by
-  sorry
+example (a b : ℝ) : IsCompact (Set.Icc a b) := isCompact_Icc
+
+/-- Equivalence of L30 SeqCompactto mathlib -/
+theorem isSeqCompactL30_iff_isSeqCompact {K : Set ℝ} : IsSeqCompactL30 K ↔ IsSeqCompact K := by
+  constructor
+  . intro seqCompact
+    intro a ha
+    have ⟨s, x, hxK, hsmono, hconv⟩ := seqCompact a ha
+    use x
+    simp_all [Metric.tendsto_atTop]
+    aesop
+  . intro seqCompact
+    simp [IsSeqCompactL30]
+    intro a aK
+    dsimp [IsSeqCompact] at seqCompact
+    obtain ⟨lim,limK,⟨bidx,idxmono,btends⟩⟩:= seqCompact aK
+    rw [Metric.tendsto_atTop] at btends
+    use bidx
+    use lim
+    aesop
 
 /-! ### Bridge 3: sequential compactness ↔ compactness on `ℝ` -/
 
@@ -129,24 +149,23 @@ example (a b : ℝ) : IsCompact (Set.Icc a b) := by
 -- found:  Metric.tendsto_atTop
 theorem isCompact_of_isSeqCompact {K : Set ℝ} (hK : IsSeqCompactL30 K) :
     IsCompact K := by
-  apply IsSeqCompact.isCompact -- This is Mathlib's IsSeqCompact, instead of our IsSeqCompactL30!
-  intro a ha
-  obtain ⟨s, x, hxK, hsmono, hconv⟩ := hK a ha
-  refine ⟨x, hxK, s, hsmono, ?_⟩
-  rw [Metric.tendsto_atTop]
-  intro ε hε
-  obtain ⟨N, hN⟩ := hconv ε hε
-  exact ⟨N, fun n hn => by simpa [Real.dist_eq] using hN n hn⟩
+  simp_all [IsSeqCompact.isCompact,isSeqCompactL30_iff_isSeqCompact]
 
 /-- Mini-exercise 3.  The reverse direction; mirror of the forward proof. -/
--- search: #leansearch "compact set is sequentially compact metric."
+-- #leansearch "compact set is sequentially compact metric."
 example {K : Set ℝ} (hK : IsCompact K) : IsSeqCompactL30 K := by
-  sorry
+  simp_all [IsCompact.isSeqCompact,isSeqCompactL30_iff_isSeqCompact]
 
 /-- Mini-exercise 4.  Re-derive L29's `seqCompact_bounded` in two lines. -/
 -- search: #leansearch "bounded set is contained in some closed ball around zero."
 example {K : Set ℝ} (hK : IsSeqCompactL30 K) : ∃ M, ∀ x ∈ K, |x| ≤ M := by
-  sorry
+  rw [isSeqCompactL30_iff_isSeqCompact] at hK
+  have kBounded := IsSeqCompact.totallyBounded hK
+  have kBounded': Bornology.IsBounded K := TotallyBounded.isBounded kBounded
+  have normBounded := kBounded'.exists_pos_norm_le
+  aesop
+
+
 
 /-! ### Bridge 4: pointwise continuity -/
 
